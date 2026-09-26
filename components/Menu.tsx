@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useI18n, type Lang } from "@/lib/i18n";
 import { useBackupReminder } from "@/lib/ledger/hooks";
 import { CloseIcon } from "./icons";
-import { InstallInstructions } from "./InstallHint";
+import { InstallHint, InstallInstructions } from "./InstallHint";
 import { useToast } from "./Toast";
 import { useBackupActions } from "./useBackupActions";
 
@@ -26,21 +26,35 @@ export default function Menu({ open, onClose }: { open: boolean; onClose: () => 
     if (open) closeRef.current?.focus();
   }, [open]);
 
-  if (!open) return null;
-
   const item = "flex min-h-13 w-full items-center gap-3 rounded-xl px-3 text-left text-[16px] active:bg-line";
 
   return (
-    <div className="fixed inset-0 z-40" role="dialog" aria-modal="true" aria-label={t("menu")}>
+    // Luôn giữ trong DOM sau lần mở đầu để có hiệu ứng cả lúc mở lẫn lúc đóng.
+    // Khi đóng: `inert` chặn focus/đọc màn hình, `invisible` áp dụng sau khi trượt xong (delay bằng thời gian trượt).
+    <div
+      className={`fixed inset-0 z-40 transition-[visibility] duration-0 motion-reduce:delay-0 ${
+        open ? "visible delay-0" : "pointer-events-none invisible delay-300"
+      }`}
+      role="dialog"
+      aria-modal="true"
+      aria-label={t("menu")}
+      inert={!open}
+    >
       <button
         type="button"
         aria-label={t("close")}
         tabIndex={-1}
         onClick={onClose}
-        className="absolute inset-0 bg-black/40"
+        className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ease-out motion-reduce:transition-none starting:opacity-0 ${
+          open ? "opacity-100" : "opacity-0"
+        }`}
         data-testid="menu-backdrop"
       />
-      <nav className="absolute inset-y-0 left-0 flex w-[85%] max-w-[360px] flex-col gap-1 overflow-y-auto bg-background p-3 pt-[max(12px,env(safe-area-inset-top))] shadow-xl">
+      <nav
+        className={`absolute inset-y-0 left-0 flex w-[85%] max-w-[360px] flex-col gap-1 overflow-y-auto bg-background p-3 pt-[max(12px,env(safe-area-inset-top))] shadow-xl transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform motion-reduce:transition-none starting:-translate-x-full ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
         <div className="mb-2 flex items-center justify-between">
           <span className="px-3 text-lg font-bold">{t("appName")}</span>
           <button
@@ -54,6 +68,8 @@ export default function Menu({ open, onClose }: { open: boolean; onClose: () => 
             <CloseIcon />
           </button>
         </div>
+
+        <InstallHint />
 
         <div className="px-3 pt-2 pb-1 text-sm font-medium text-muted">{t("language")}</div>
         <div className="grid grid-cols-2 gap-2 px-3 pb-3" role="radiogroup" aria-label={t("language")}>

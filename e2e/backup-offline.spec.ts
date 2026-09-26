@@ -88,16 +88,26 @@ test.describe("gợi ý cài trên iPhone", () => {
       "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
   });
 
-  test("chỉ hiện sau khi có giao dịch, hướng dẫn Chia sẻ → Thêm vào Màn hình chính, đóng được", async ({ page }) => {
+  test("gợi ý nằm trong menu (không ở màn chính), có chấm báo, hướng dẫn Chia sẻ → Thêm vào Màn hình chính, đóng được", async ({ page }) => {
     await openHome(page);
-    await expect(page.getByTestId("install-hint")).toHaveCount(0);
+    await expect(page.getByTestId("menu-dot")).toHaveCount(0);
     await addDebtFlow(page, "Anh Tú", "80", { create: true });
-    const hint = page.getByTestId("install-hint");
+
+    await expect(page.getByTestId("menu-dot")).toBeVisible();
+    await expect(page.getByRole("main").getByTestId("install-hint")).toHaveCount(0);
+
+    await page.getByRole("button", { name: "Menu" }).click();
+    const hint = page.getByRole("dialog").getByTestId("install-hint");
     await expect(hint).toContainText("Thêm vào Màn hình chính");
+    await expect.poll(async () => (await page.locator("nav").boundingBox())?.x).toBe(0);
+    await page.screenshot({ path: "test-results/menu-install-hint.png" });
     await hint.getByRole("button", { name: "Đóng" }).click();
     await expect(hint).toHaveCount(0);
+    await page.getByTestId("menu-close").click();
+    await expect(page.getByTestId("menu-dot")).toHaveCount(0);
+
     await page.reload();
     await expect(page.getByTestId("total")).toHaveText("80.000 đ");
-    await expect(page.getByTestId("install-hint")).toHaveCount(0);
+    await expect(page.getByTestId("menu-dot")).toHaveCount(0);
   });
 });

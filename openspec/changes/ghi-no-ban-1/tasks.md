@@ -52,7 +52,7 @@
 
 ## 8. Menu phụ và sao lưu
 
-- [x] 8.1 Drawer menu gắn với history (nút quay lại đóng menu), gồm ngôn ngữ, xuất/nhập sao lưu, hướng dẫn cài, mục "Đăng nhập / Đồng bộ — sắp có"; kiểm chứng e2e mở menu rồi quay lại vẫn ở màn chính
+- [x] 8.1 Drawer menu gắn với history (nút quay lại đóng menu), có hiệu ứng trượt vào/ra, gồm ngôn ngữ, xuất/nhập sao lưu, hướng dẫn cài, mục "Đăng nhập / Đồng bộ — sắp có"; kiểm chứng e2e mở menu rồi quay lại vẫn ở màn chính
 - [x] 8.2 `exportBackup` sinh JSON theo design D13, chia sẻ qua Web Share hoặc tải về, lưu `lastBackupAt`; kiểm chứng test nội dung file đủ người nợ và giao dịch kể cả đã hủy
 - [x] 8.3 Nhập sao lưu: kiểm tra định dạng, hiện tóm tắt để xác nhận, gộp theo `id`, gọi `recomputeBalance`; kiểm chứng test "nhập vào máy mới", "nhập lại cùng file không nhân đôi", "file hỏng không đổi dữ liệu"
 - [x] 8.4 Lời nhắc sao lưu khi >7 ngày và có giao dịch mới; kiểm chứng test với đồng hồ giả lập
@@ -62,7 +62,7 @@
 - [x] 9.1 Thêm `manifest.webmanifest` (tên tạm "Sổ Nợ" lấy từ khóa `appName` của i18n, `display: standalone`, biểu tượng 192/512, màu) và thẻ Apple; kiểm chứng Lighthouse báo installable
 - [x] 9.2 Viết `scripts/gen-sw.mjs` sinh danh sách precache từ `out/` và `sw.js` cache-first, không `skipWaiting`; nối vào `npm run build`; kiểm chứng `out/sw.js` chứa danh sách file và hash phiên bản
 - [x] 9.3 Đăng ký service worker sau khi trang tải xong; kiểm chứng e2e: tải lần đầu, chuyển context sang offline, tải lại thấy màn chính và ghi nợ được
-- [x] 9.4 Gợi ý cài ra màn hình chính (Android dùng `beforeinstallprompt`, iPhone hiện hướng dẫn "Chia sẻ → Thêm vào Màn hình chính"), chỉ hiện khi chưa cài và đã có giao dịch, đóng được; kiểm chứng e2e giả lập user agent iPhone
+- [x] 9.4 Gợi ý cài ra màn hình chính nằm trong menu, nút `[=]` có chấm báo (Android dùng `beforeinstallprompt`, iPhone hiện hướng dẫn "Chia sẻ → Thêm vào Màn hình chính"), chỉ hiện khi chưa cài và đã có giao dịch, đóng được; kiểm chứng e2e giả lập user agent iPhone
 - [ ] 9.5 Tạo `vercel.json` đặt `Cache-Control: no-cache` cho `/sw.js` và `/manifest.webmanifest`; kiểm chứng bằng `curl -I` trên bản deploy thấy đúng header
 
 ## 10. Kiểm tra tổng thể

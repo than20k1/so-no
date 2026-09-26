@@ -35,11 +35,15 @@ Khi lưu giao dịch đầu tiên, hệ thống SHALL xin trình duyệt cấp q
 - **THEN** app vẫn ghi nợ bình thường, không báo lỗi
 
 ### Requirement: Gợi ý cài ra màn hình chính
-Khi app đang chạy trong trình duyệt (chưa cài) và sổ đã có ít nhất một giao dịch, hệ thống SHALL hiển thị lời gợi ý cài app ra màn hình chính, giải thích rằng việc này giúp giữ dữ liệu an toàn hơn. Trên iPhone, lời gợi ý MUST hướng dẫn thao tác "Chia sẻ → Thêm vào Màn hình chính". Người dùng MUST đóng được lời gợi ý và lời gợi ý không được chặn thao tác ghi/trừ nợ.
+Khi app đang chạy trong trình duyệt (chưa cài) và sổ đã có ít nhất một giao dịch, hệ thống SHALL hiển thị lời gợi ý cài app ra màn hình chính **bên trong menu phụ**, giải thích rằng việc này giúp giữ dữ liệu an toàn hơn. Màn chính MUST NOT hiển thị thẻ gợi ý này (để không rối mắt); thay vào đó nút menu `[=]` SHALL có một chấm báo nhỏ khi còn gợi ý chưa đóng. Trên iPhone, lời gợi ý MUST hướng dẫn thao tác "Chia sẻ → Thêm vào Màn hình chính". Người dùng MUST đóng được lời gợi ý; sau khi đóng thì chấm báo biến mất và không hiện lại.
 
 #### Scenario: Gợi ý trên iPhone
-- **WHEN** người dùng dùng app trong Safari trên iPhone, chưa cài, và đã có giao dịch
-- **THEN** app hiện hướng dẫn "Chia sẻ → Thêm vào Màn hình chính" có nút đóng
+- **WHEN** người dùng dùng app trong Safari trên iPhone, chưa cài, đã có giao dịch, và mở menu
+- **THEN** menu hiện hướng dẫn "Chia sẻ → Thêm vào Màn hình chính" có nút đóng
+
+#### Scenario: Màn chính gọn
+- **WHEN** app chưa cài và sổ đã có giao dịch
+- **THEN** màn chính không có thẻ gợi ý cài app, chỉ có chấm báo trên nút `[=]`
 
 ### Requirement: Cập nhật phiên bản không làm gián đoạn
 Khi có phiên bản app mới, hệ thống SHALL tải ngầm và áp dụng ở lần mở sau, MUST NOT tự tải lại trang khi người dùng đang ở giữa một thao tác ghi hoặc trừ nợ.

@@ -41,9 +41,12 @@ test("menu: mở, nút quay lại đóng menu và vẫn ở màn chính; mục �
   await page.getByRole("button", { name: "Menu" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
+  // Menu trượt vào: vị trí ngang về 0 sau hiệu ứng.
+  await expect.poll(async () => (await page.locator("nav").boundingBox())?.x).toBe(0);
   await page.screenshot({ path: "test-results/menu.png" });
 
   await page.goBack();
+  // Đang trượt ra thì menu vẫn nằm trong DOM; sau hiệu ứng thì ẩn hẳn.
   await expect(dialog).toBeHidden();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("link", { name: "Ghi nợ" })).toBeVisible();

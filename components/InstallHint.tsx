@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import { useI18n } from "@/lib/i18n";
 import { isIos, useInstallPrompt } from "@/lib/install";
 import { useHasTransactions } from "@/lib/ledger/hooks";
 import { CloseIcon } from "./icons";
 
 const DISMISS_KEY = "so-no.installHintDismissed";
+
+// Trạng thái "đã đóng gợi ý" dùng chung cho chấm báo trên nút menu và thẻ gợi ý trong menu.
+const dismissListeners = new Set<() => void>();
 
 function readDismissed() {
   try {
@@ -16,9 +19,29 @@ function readDismissed() {
   }
 }
 
+function subscribeDismissed(cb: () => void) {
+  dismissListeners.add(cb);
+  return () => dismissListeners.delete(cb);
+}
+
+function dismissInstallHint() {
+  try {
+    localStorage.setItem(DISMISS_KEY, "1");
+  } catch {}
+  dismissListeners.forEach((l) => l());
+}
+
+/** Có nên gợi ý cài app không: chưa cài, sổ đã có giao dịch, và người dùng chưa đóng gợi ý. */
+export function useInstallHint() {
+  const { standalone } = useInstallPrompt();
+  const hasTx = useHasTransactions();
+  const dismissed = useSyncExternalStore(subscribeDismissed, readDismissed, () => true);
+  return { visible: !standalone && hasTx && !dismissed, dismiss: dismissInstallHint };
+}
+
 const noopSubscribe = () => () => {};
 
-/** Nội dung hướng dẫn cài — dùng trong gợi ý ở màn chính và trong menu. */
+/** Nội dung hướng dẫn cài — dùng trong thẻ gợi ý và mục "Cài ra màn hình chính" của menu. */
 export function InstallInstructions() {
   const { t } = useI18n();
   const { canPrompt, standalone, prompt } = useInstallPrompt();
@@ -40,27 +63,16 @@ export function InstallInstructions() {
   return <p className="text-sm">{t("installAndroidManual")}</p>;
 }
 
-/** Gợi ý cài ra màn hình chính: chỉ khi chưa cài, đã có giao dịch, và chưa bị đóng. */
+/** Thẻ gợi ý cài app — hiện trong menu (không đặt ở màn chính để đỡ rối mắt). */
 export function InstallHint() {
   const { t } = useI18n();
-  const { standalone } = useInstallPrompt();
-  const hasTx = useHasTransactions();
-  const storedDismissed = useSyncExternalStore(noopSubscribe, readDismissed, () => true);
-  const [dismissed, setDismissed] = useState(false);
-
-  if (standalone || !hasTx || storedDismissed || dismissed) return null;
-
-  function dismiss() {
-    setDismissed(true);
-    try {
-      localStorage.setItem(DISMISS_KEY, "1");
-    } catch {}
-  }
+  const { visible, dismiss } = useInstallHint();
+  if (!visible) return null;
 
   return (
     <section
       aria-label={t("installTitle")}
-      className="relative rounded-2xl border border-line bg-surface p-4 pr-12"
+      className="relative mx-3 mb-2 rounded-2xl border border-line bg-surface p-4 pr-12"
       data-testid="install-hint"
     >
       <h2 className="text-[15px] font-semibold">{t("installTitle")}</h2>

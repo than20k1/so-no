@@ -8,7 +8,7 @@ import { useBackupReminder, useDebtors } from "@/lib/ledger/hooks";
 import { formatMoney } from "@/lib/money";
 import { filterByName } from "@/lib/resolve";
 import { MenuIcon, MinusIcon, PlusIcon, SearchIcon } from "./icons";
-import { InstallHint } from "./InstallHint";
+import { useInstallHint } from "./InstallHint";
 import { useMenuState } from "./useMenuState";
 import { useBackupActions } from "./useBackupActions";
 
@@ -18,6 +18,9 @@ const Menu = dynamic(() => import("./Menu"), { ssr: false });
 export function HomeScreen() {
   const { t } = useI18n();
   const menu = useMenuState();
+  // Menu chỉ được nạp ở lần mở đầu, sau đó giữ lại để có hiệu ứng đóng/mở.
+  const [menuLoaded, setMenuLoaded] = useState(false);
+  const installHint = useInstallHint();
   const debtors = useDebtors();
   const [query, setQuery] = useState("");
 
@@ -35,12 +38,19 @@ export function HomeScreen() {
       <header className="flex items-center gap-2 px-2 pt-[max(8px,env(safe-area-inset-top))]">
         <button
           type="button"
-          onClick={menu.show}
+          onClick={() => {
+            setMenuLoaded(true);
+            menu.show();
+          }}
           aria-label={t("menu")}
           aria-expanded={menu.open}
-          className="grid size-12 place-items-center rounded-full active:bg-line"
+          className="relative grid size-12 place-items-center rounded-full active:bg-line"
         >
           <MenuIcon />
+          {/* Chấm báo: trong menu có gợi ý cài app chưa xem */}
+          {installHint.visible && (
+            <span className="absolute top-2.5 right-2.5 size-2.5 rounded-full bg-add ring-2 ring-background" data-testid="menu-dot" />
+          )}
         </button>
         <div className="ml-auto pr-3 text-right">
           <div className="text-xs text-muted">{t("totalOwed")}</div>
@@ -69,7 +79,6 @@ export function HomeScreen() {
         </div>
 
         <BackupReminderBanner />
-        <InstallHint />
 
         {debtors && debtors.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-line p-6 text-center text-muted">{t("emptyBook")}</p>
@@ -113,7 +122,7 @@ export function HomeScreen() {
         )}
       </main>
 
-      {menu.open && <Menu open onClose={menu.close} />}
+      {menuLoaded && <Menu open={menu.open} onClose={menu.close} />}
     </>
   );
 }

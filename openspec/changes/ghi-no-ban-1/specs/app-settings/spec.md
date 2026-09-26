@@ -7,7 +7,7 @@ Mô tả menu phụ mở từ nút `[=]` chứa các chức năng không thườ
 ## ADDED Requirements
 
 ### Requirement: Menu phụ
-Bấm nút `[=]` ở màn chính SHALL mở menu phụ gồm: chọn ngôn ngữ, xuất sao lưu, nhập sao lưu, hướng dẫn cài ra màn hình chính, và mục "Đăng nhập / Đồng bộ" ở trạng thái "sắp có". Menu MUST đóng được bằng nút đóng, bằng chạm ra ngoài, hoặc bằng thao tác quay lại của điện thoại.
+Bấm nút `[=]` ở màn chính SHALL mở menu phụ gồm: chọn ngôn ngữ, xuất sao lưu, nhập sao lưu, hướng dẫn cài ra màn hình chính, và mục "Đăng nhập / Đồng bộ" ở trạng thái "sắp có". Menu MUST đóng được bằng nút đóng, bằng chạm ra ngoài, hoặc bằng thao tác quay lại của điện thoại. Menu SHALL trượt vào từ cạnh trái khi mở và trượt ra khi đóng, nền phía sau mờ dần tương ứng; hiệu ứng MUST bị tắt khi thiết bị bật chế độ giảm chuyển động.
 
 #### Scenario: Mở và đóng menu
 - **WHEN** người dùng bấm `[=]` rồi bấm nút quay lại của điện thoại
