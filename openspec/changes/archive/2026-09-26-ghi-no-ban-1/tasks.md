@@ -63,7 +63,7 @@
 - [x] 9.2 Viết `scripts/gen-sw.mjs` sinh danh sách precache từ `out/` và `sw.js` cache-first, không `skipWaiting`; nối vào `npm run build`; kiểm chứng `out/sw.js` chứa danh sách file và hash phiên bản
 - [x] 9.3 Đăng ký service worker sau khi trang tải xong; kiểm chứng e2e: tải lần đầu, chuyển context sang offline, tải lại thấy màn chính và ghi nợ được
 - [x] 9.4 Gợi ý cài ra màn hình chính nằm trong menu, nút `[=]` có chấm báo (Android dùng `beforeinstallprompt`, iPhone hiện hướng dẫn "Chia sẻ → Thêm vào Màn hình chính"), chỉ hiện khi chưa cài và đã có giao dịch, đóng được; kiểm chứng e2e giả lập user agent iPhone
-- [ ] 9.5 Tạo `vercel.json` đặt `Cache-Control: no-cache` cho `/sw.js` và `/manifest.webmanifest`; kiểm chứng bằng `curl -I` trên bản deploy thấy đúng header
+- [x] 9.5 Tạo `vercel.json` đặt `Cache-Control: no-cache` cho `/sw.js` và `/manifest.webmanifest`; kiểm chứng bằng `curl -I` trên bản deploy thấy đúng header
 
 ## 10. Kiểm tra tổng thể
 
