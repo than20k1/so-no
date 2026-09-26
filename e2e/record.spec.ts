@@ -114,14 +114,19 @@ test("hoàn tác: số dư trở về như trước; người mới tạo biến
   await expect(rowFor(page, "Bác Hùng")).toHaveCount(0);
 });
 
-test("lưu khi mất mạng vẫn thành công", async ({ page, context }) => {
-  await addButton(page).click();
-  await expect(page.locator("#name")).toBeFocused();
-  await context.setOffline(true);
-  await page.locator("#name").fill("Anh Tú");
-  await page.locator("#amount").fill("80");
-  await page.getByRole("button", { name: "Lưu" }).click();
-  await expect(page.getByRole("status")).toContainText("Đã ghi 80.000 đ cho Anh Tú");
-  await expect(page.getByRole("button", { name: "Hoàn tác" })).toBeVisible();
-  await context.setOffline(false);
+test.describe("chưa có service worker (lần mở đầu)", () => {
+  test.use({ serviceWorkers: "block" });
+
+  test("lưu khi mất mạng vẫn thành công và quay về màn chính", async ({ page, context }) => {
+    await addButton(page).click();
+    await expect(page.locator("#name")).toBeFocused();
+    await context.setOffline(true);
+    await page.locator("#name").fill("Anh Tú");
+    await page.locator("#amount").fill("80");
+    await page.getByRole("button", { name: "Lưu" }).click();
+    await expect(page.getByRole("status")).toContainText("Đã ghi 80.000 đ cho Anh Tú");
+    await expect(page.getByRole("button", { name: "Hoàn tác" })).toBeVisible();
+    await expect(rowFor(page, "Anh Tú")).toContainText("80.000 đ");
+    await context.setOffline(false);
+  });
 });

@@ -39,6 +39,12 @@ export function DebtForm({ mode }: { mode: DebtFormMode }) {
   const [overpayConfirmed, setOverpayConfirmed] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Tải trước màn chính để sau khi lưu quay về được ngay, kể cả khi vừa mất mạng
+  // mà service worker chưa kịp cài (lần mở app đầu tiên).
+  useEffect(() => {
+    router.prefetch("/");
+  }, [router]);
+
   const nameRef = useRef<HTMLInputElement>(null);
   const amountRef = useRef<HTMLInputElement>(null);
 
