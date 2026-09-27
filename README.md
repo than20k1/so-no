@@ -33,7 +33,7 @@ lib/ledger/          lớp dữ liệu sổ nợ (Dexie): ghi/trừ/hủy, số 
 lib/sync/            đồng bộ phía trình duyệt (tải lười): engine đẩy/kéo, gắn sổ với tài khoản, gọi API tài khoản
 server/              server API (Hono): account.ts (đăng ký/đăng nhập/OTP), sync.ts, auth.ts (Better Auth),
                      mail.ts, admin.ts, db/ (schema Drizzle + migrations)
-api/[...route].ts    điểm vào Vercel Function cho mọi /api/*
+api/index.ts    điểm vào Vercel Function cho mọi /api/*
 scripts/icon.svg     biểu tượng gốc của app (cuốn sổ + dấu "NỢ")
 lib/i18n/            từ điển vi/en
 scripts/             gen-sw (service worker), check-size, serve, measure, gen-icons

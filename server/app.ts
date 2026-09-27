@@ -22,7 +22,7 @@ export interface AppEnv {
 }
 
 /**
- * App server thuần Web (Request/Response): chạy trên Vercel qua `api/[...route].ts`,
+ * App server thuần Web (Request/Response): chạy trên Vercel qua `api/index.ts`,
  * trên Node qua `scripts/api-dev.ts` — đổi nơi chạy không phải sửa file này (design D1).
  */
 export function createApp(deps: AppDeps) {

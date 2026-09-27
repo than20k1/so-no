@@ -31,16 +31,17 @@
 ```
  Trình duyệt (cùng origin)                  Vercel (sin1)                 Neon (Singapore)
  +----------------------+   /api/*   +---------------------------+   pg   +------------+
- | App tĩnh (out/)      | ---------> | api/[...route].ts        | -----> | Postgres   |
+ | App tĩnh (out/)      | ---------> | api/index.ts        | -----> | Postgres   |
  | IndexedDB (Dexie)    |  cookie    |   -> server/app.ts (Hono)  |        |  (pooled)  |
  | lib/sync (tải lười)  | <--------- |   Better Auth, sync, mail  |        +------------+
  +----------------------+            +---------------------------+
 ```
 - `server/app.ts` xuất một app Hono thuần (Web `Request`/`Response`). Điểm vào:
-  - Vercel: `api/[...route].ts` dùng `hono/vercel`.
+  - Vercel: `api/index.ts` dùng `hono/vercel`.
   - Node: `scripts/api-dev.mjs` dùng `@hono/node-server`, cho máy dev, e2e và VPS sau này.
 - Cùng origin nên cookie phiên hoạt động mà không cần CORS.
 - `vercel.json` thêm `"regions": ["sin1"]` để function nằm cạnh DB.
+- `vercel.json` thêm rewrite `/api/(.*)` → `/api`, gom về một function `api/index.ts`. Lúc deploy thật phát hiện: `trailingSlash: true` thêm "/" cuối đường dẫn, làm route động `api/[...route].ts` không khớp (404). Hono đặt `strict: false` nên nhận cả đường dẫn có "/" cuối; client luôn gọi dạng có "/" cuối để khỏi bị chuyển hướng 308.
 - *Phương án khác*:
   - Bỏ `output: "export"`, dùng Route Handlers của Next. Bỏ vì phải viết lại service worker/build, và gắn chặt server vào Next.
   - Supabase. Bỏ vì app gọi thẳng dịch vụ hãng và gói free tự tạm dừng khi không ai dùng.

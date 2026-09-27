@@ -30,7 +30,7 @@ Hai capability trên cũng đang được change `sua-xoa-nguoi-no` sửa (thêm
 
 ## Impact
 
-- **Mới**: thư mục `server/` (app Hono, cấu hình Better Auth, schema Drizzle, logic đồng bộ, gửi mail), `api/[...route].ts` (điểm vào Vercel Function), `lib/sync/` (bộ đồng bộ phía trình duyệt, tải lười), các trang `app/dang-nhap/`, `app/dang-ky/`, `app/quen-mat-khau/`, `scripts/admin-restore.mjs`, migration SQL.
+- **Mới**: thư mục `server/` (app Hono, cấu hình Better Auth, schema Drizzle, logic đồng bộ, gửi mail), `api/index.ts` (điểm vào Vercel Function), `lib/sync/` (bộ đồng bộ phía trình duyệt, tải lười), các trang `app/dang-nhap/`, `app/dang-ky/`, `app/quen-mat-khau/`, `scripts/admin-restore.mjs`, migration SQL.
 - **Sửa**: `lib/ledger/db.ts` (Dexie version 3: đánh dấu dòng cần đẩy), `components/Menu.tsx`, `components/Providers.tsx`, `scripts/gen-sw.mjs` (không chặn `/api`), `scripts/serve.mjs` (chuyển `/api` sang server local), `vercel.json` (vùng `sin1`), `package.json`.
 - **Thư viện mới (chỉ phía server/test, không vào bundle màn chính)**: `hono`, `better-auth`, `drizzle-orm`, `pg`, `nodemailer`; dev: `drizzle-kit`, `@electric-sql/pglite`, `@hono/node-server`.
 - **Biến môi trường**: `DATABASE_URL` (đã có), `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GMAIL_USER`, `GMAIL_APP_PASSWORD`.

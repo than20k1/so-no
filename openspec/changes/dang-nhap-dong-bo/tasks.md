@@ -10,7 +10,7 @@
 ## 2. Nền server
 
 - [x] 2.1 Schema Drizzle `server/db/schema.ts` (bảng Better Auth + `books`, `debtors`, `transactions`, `debtor_events`, `login_throttle`, sequence `sync_seq`, chỉ mục `(book_id, seq)`), sinh migration, lệnh `npm run db:migrate`, và `server/db/client.ts` chọn `pg` hoặc PGlite theo `DATABASE_URL`. Kiểm tra: test chạy migration trên PGlite ra đủ bảng; chạy `db:migrate` trên nhánh Neon `dev` rồi liệt kê được các bảng
-- [x] 2.2 `server/app.ts` (Hono, `GET /api/health`), `api/[...route].ts` (Vercel), `scripts/api-dev.mjs` (Node, cổng 3101), `scripts/serve.mjs` chuyển `/api` sang API. Kiểm tra: `npm run dev:api` + `npm run serve` thì `curl localhost:3100/api/health` trả `{ ok: true }` kèm kết nối DB
+- [x] 2.2 `server/app.ts` (Hono, `GET /api/health`), `api/index.ts` (Vercel), `scripts/api-dev.mjs` (Node, cổng 3101), `scripts/serve.mjs` chuyển `/api` sang API. Kiểm tra: `npm run dev:api` + `npm run serve` thì `curl localhost:3100/api/health` trả `{ ok: true }` kèm kết nối DB
 - [x] 2.3 Spike Better Auth trên PGlite: cấu hình `emailAndPassword` + `emailOTP` + `phoneNumber` như design D3, chạy thử đăng ký → OTP → xác nhận → đăng nhập bằng SĐT + mật khẩu; đăng nhập khi chưa xác nhận bị chặn; đặt lại mật khẩu bằng OTP. Kiểm tra: test spike qua; ghi lại vào design.md mọi chỗ phải làm khác D3
 
 ## 3. API tài khoản
