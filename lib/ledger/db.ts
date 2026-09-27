@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable, type Transaction as DexieTransaction } from "dexie";
 import { newId } from "../id";
-import type { Book, Debtor, DebtorEvent, Meta, SyncMark, Transaction } from "./types";
+import type { Book, Debtor, DebtorEvent, Expense, Group, GroupEvent, GroupMember, Meta, SyncMark, Transaction } from "./types";
 
 export class SoNoDB extends Dexie {
   books!: EntityTable<Book, "id">;
@@ -8,6 +8,10 @@ export class SoNoDB extends Dexie {
   transactions!: EntityTable<Transaction, "id">;
   meta!: EntityTable<Meta, "key">;
   debtorEvents!: EntityTable<DebtorEvent, "id">;
+  groups!: EntityTable<Group, "id">;
+  groupMembers!: EntityTable<GroupMember, "id">;
+  expenses!: EntityTable<Expense, "id">;
+  groupEvents!: EntityTable<GroupEvent, "id">;
 
   constructor(name = "so-no") {
     super(name);
@@ -38,7 +42,8 @@ export class SoNoDB extends Dexie {
         debtorEvents: "id, debtorId, bookId, at, _dirty",
       })
       .upgrade(async (tx) => {
-        for (const name of SYNCED_TABLES) {
+        // Danh sách cố định của bản 3 — bảng nhóm (bản 4) lúc này chưa có.
+        for (const name of ["debtors", "transactions", "debtorEvents"]) {
           await tx
             .table(name)
             .toCollection()
@@ -47,6 +52,13 @@ export class SoNoDB extends Dexie {
             });
         }
       });
+    // Bản 4: chia tiền nhóm. Chỉ thêm bảng, không đụng dữ liệu sổ.
+    this.version(4).stores({
+      groups: "id, _dirty",
+      groupMembers: "id, groupId, _dirty",
+      expenses: "id, groupId, _dirty",
+      groupEvents: "id, groupId, entityId, _dirty",
+    });
     this.markDirtyOnWrite();
   }
 
@@ -69,7 +81,7 @@ export class SoNoDB extends Dexie {
   }
 }
 
-const SYNCED_TABLES = ["debtors", "transactions", "debtorEvents"] as const;
+const SYNCED_TABLES = ["debtors", "transactions", "debtorEvents", "groups", "groupMembers", "expenses", "groupEvents"] as const;
 type SyncedTable = (typeof SYNCED_TABLES)[number];
 
 /** Cột mà server lưu. Cột khác (balance, lastTxAt, _dirty) chỉ có trên máy. */
@@ -77,6 +89,11 @@ const SYNCED_FIELDS: Record<SyncedTable, Set<string>> = {
   debtors: new Set(["bookId", "name", "note", "searchKey", "createdAt", "deletedAt", "purgedAt"]),
   transactions: new Set(["bookId", "debtorId", "amount", "kind", "direction", "occurredAt", "createdAt", "voidedAt", "source", "note", "deviceId"]),
   debtorEvents: new Set(["bookId", "debtorId", "kind", "before", "after", "at", "deviceId"]),
+  // Nhóm: xoá/khôi phục và người tạo do server quyết — không làm dòng thành chờ đẩy.
+  groups: new Set(["name", "createdAt"]),
+  groupMembers: new Set(["groupId", "name", "searchKey", "weight", "orderKey", "createdAt", "removedAt"]),
+  expenses: new Set(["groupId", "kind", "title", "amount", "payerMemberId", "toMemberId", "shares", "occurredAt", "createdAt", "deletedAt"]),
+  groupEvents: new Set(["groupId", "entity", "entityId", "kind", "before", "after", "at", "deviceId"]),
 };
 
 type MarkableTransaction = DexieTransaction & { __remoteWrite?: boolean };

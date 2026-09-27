@@ -26,12 +26,16 @@ node scripts/gen-icons.mjs # sinh lại biểu tượng PNG (kể cả bản mas
 ## Cấu trúc
 
 ```
-app/                 các trang: / (màn chính), /ghi, /tru, /nguoi?id=, /thung-rac
-components/          giao diện (HomeScreen, DebtForm, DebtorDetail, DebtorEditSheet, TrashScreen, Menu, Toast...)
+app/                 các trang: / (màn chính), /ghi, /tru, /nguoi?id=, /thung-rac,
+                     /chia-tien (nhóm), /chia-tien/nhom?id=, /chia-tien/mon?g=&id=, /chia-tien/tham-gia#<token>
+components/          giao diện (HomeScreen, MainHeader + ModeSwitch, DebtForm, DebtorDetail, TrashScreen, Menu, Toast...)
+components/groups/   giao diện Chia tiền (danh sách nhóm, chi tiết 4 tab, thêm món, mời bạn, vào nhóm)
 lib/ledger/          lớp dữ liệu sổ nợ (Dexie): ghi/trừ/hủy, số dư, nhập hàng loạt, sao lưu,
                      sửa/xoá người nợ + lịch sử sửa + thùng rác (debtors.ts)
+lib/split/           tính chia tiền thuần (chia theo suất, làm tròn, số dư, ai trả ai) — dùng chung máy và server
+lib/groups/          nhóm trên máy: thao tác (groups.ts), đồng bộ (sync.ts), gọi API (api.ts), dạng trao đổi (wire.ts)
 lib/sync/            đồng bộ phía trình duyệt (tải lười): engine đẩy/kéo, gắn sổ với tài khoản, gọi API tài khoản
-server/              server API (Hono): account.ts (đăng ký/đăng nhập/OTP), sync.ts, auth.ts (Better Auth),
+server/              server API (Hono): account.ts (đăng ký/đăng nhập/OTP), sync.ts, groups.ts + groups-sync.ts, auth.ts (Better Auth),
                      mail.ts, admin.ts, db/ (schema Drizzle + migrations)
 api/index.ts    điểm vào Vercel Function cho mọi /api/*
 scripts/icon.svg     biểu tượng gốc của app (cuốn sổ + dấu "NỢ")
@@ -60,7 +64,7 @@ Giả lập mạng Slow 4G (RTT 150ms, ~1,6Mbps) và CPU chậm 4 lần.
 | Lighthouse 13.5 mobile, throttling devtools | FCP 1,3s | TTI 2,1s |
 | Lighthouse 13.5 mobile, throttling mô phỏng | FCP 0,8s | TTI 2,5s |
 
-- JS tải cho trang `/`: **178,3KB gzip** (ngân sách 180KB); trong đó Next.js + React ~130KB, Dexie ~31KB.
+- JS tải cho trang `/`: **179,3KB gzip** (sau khi thêm công tắc Chia tiền) (ngân sách 180KB); trong đó Next.js + React ~130KB, Dexie ~31KB.
 - Lighthouse: Performance 97–98, Accessibility 100, Best Practices 100.
 - Hai nút là link thường nên bấm được ngay khi hiện, trước cả khi JavaScript chạy xong.
 - Hai số Lighthouse ở lần mở đầu cao hơn mục tiêu 2s vì Lighthouse cộng thêm độ trễ mỗi request (~560ms).
@@ -83,6 +87,28 @@ Service worker mới được cài ngầm và chỉ có hiệu lực ở lần m
   Quên mật khẩu: OTP qua email.
 - Đồng bộ: `POST /api/sync` vừa đẩy vừa kéo theo con trỏ `seq`. Giao dịch và lịch sử sửa chỉ ghi thêm; người nợ theo bản
   tới server sau cùng; mốc thùng rác 15/30 ngày tính theo giờ server.
+
+## Chia tiền nhóm
+
+- Công tắc `Ghi nợ | Chia tiền` trên header; app nhớ chế độ dùng lần cuối (`localStorage["so-no.mode"]`, script nhỏ
+  trong `app/layout.tsx` chuyển thẳng sang `/chia-tien/` trước khi vẽ). Chia tiền cần đăng nhập; phần Ghi nợ thì không.
+- Mỗi thành viên có số suất (một "nhà" 2 người = 2 suất); mỗi món có 1 người trả và danh sách người cùng chia (lưu bản chụp
+  suất lúc ghi). Phần góp làm tròn xuống, phần dư cộng từng đồng cho người vào nhóm sớm hơn. Kết quả "ai trả ai" tối đa
+  n−1 lần chuyển. Thành viên khách (chỉ có tên) nhận lại vị trí qua link mời.
+- API (cần đăng nhập, POST JSON cùng origin):
+
+| Endpoint | Việc |
+|---|---|
+| `/api/groups/sync` | đẩy + kéo dữ liệu nhóm, con trỏ riêng từng nhóm; trả `revoked` cho nhóm đã rời / đã ẩn |
+| `/api/groups/:id/invite`, `/:id/invite/reset` | lấy link mời / đổi link (chỉ người tạo) |
+| `/api/groups/join/preview`, `/api/groups/join` | xem nhóm từ link; nhận vị trí khách hoặc vào như người mới (giới hạn 30 lần / 10 phút) |
+| `/api/groups/:id/leave` | rời nhóm khi số dư = 0 (server kiểm tra lại) |
+| `/api/groups/:id/delete`, `/:id/restore` | xoá / khôi phục nhóm (chỉ người tạo); sau 30 ngày nhóm tự ẩn nhưng vẫn còn trong DB |
+
+- Link mời có dạng `/chia-tien/tham-gia/#<token>`: token nằm sau `#` nên không vào log server. Token lưu ở bảng
+  `group_invites`, không bao giờ đi qua đồng bộ.
+- Đăng xuất luôn xoá dữ liệu nhóm trên máy (đăng nhập lại sẽ tải về); còn thay đổi chưa gửi thì app hỏi lại.
+- Tài khoản chưa có nhóm nào: lượt đồng bộ định kỳ chỉ hỏi server về nhóm mỗi 10 phút (mở màn Chia tiền thì hỏi ngay).
 
 ### Biến môi trường
 

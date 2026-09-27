@@ -33,7 +33,8 @@ export async function register(page: Page, acc: Account) {
   await page.getByRole("button", { name: "Tạo tài khoản" }).click();
   await expect(page.getByTestId("otp-step")).toBeVisible();
   await page.getByTestId("otp-input").fill(await otpFor(page, acc.email));
-  await expect(page).toHaveURL(/\/$/);
+  // Đúng màn chính (không phải "/dang-ky/" — cũng kết thúc bằng "/").
+  await expect(page).toHaveURL(/:\d+\/$/);
 }
 
 export async function login(page: Page, acc: Pick<Account, "phone" | "password">) {

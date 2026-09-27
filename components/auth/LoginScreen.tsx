@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useAccountT } from "@/lib/i18n/account";
+import { useQueryParam, withNext } from "@/lib/nav";
 import { accountApi } from "@/lib/sync/api";
 import { PageHeader } from "../PageHeader";
 import { Field, FormError, NeedNetwork, PasswordInput, SubmitButton, TextInput, useErrorText } from "./common";
@@ -11,6 +12,7 @@ import { useFinishLogin } from "./useFinishLogin";
 
 export function LoginScreen() {
   const t = useAccountT();
+  const next = useQueryParam("next");
   const errorText = useErrorText();
   const { finish, dialog } = useFinishLogin();
   const [phone, setPhone] = useState("");
@@ -75,7 +77,7 @@ export function LoginScreen() {
             </Link>
             <p className="text-center text-sm">
               {t("noAccount")}{" "}
-              <Link href="/dang-ky/" replace className="font-semibold underline">
+              <Link href={withNext("/dang-ky/", next)} replace className="font-semibold underline">
                 {t("register")}
               </Link>
             </p>

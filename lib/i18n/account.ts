@@ -71,6 +71,9 @@ export const accountVi = {
   logoutWipe: "Xoá sổ khỏi máy",
   logoutUnsynced: "Còn {n} thay đổi chưa gửi lên mạng. Xoá sổ bây giờ sẽ mất các thay đổi đó.",
   logoutWipeConfirm: "Vẫn xoá",
+  logoutGroupsNote: "Các nhóm chia tiền sẽ được xoá khỏi máy này. Đăng nhập lại sẽ tải về đủ.",
+  logoutGroupsUnsynced: "Còn {n} thay đổi chia tiền chưa gửi lên mạng. Đăng xuất bây giờ sẽ mất các thay đổi đó.",
+  logoutKeepConfirm: "Vẫn đăng xuất",
   loggedOut: "Đã đăng xuất",
 };
 
@@ -143,6 +146,9 @@ export const accountEn: Record<AccountKey, string> = {
   logoutWipe: "Remove book from phone",
   logoutUnsynced: "{n} changes haven't been uploaded. Removing the book now will lose them.",
   logoutWipeConfirm: "Remove anyway",
+  logoutGroupsNote: "Your bill-splitting groups will be removed from this phone. Log in again to get them back.",
+  logoutGroupsUnsynced: "{n} bill-splitting changes haven't been uploaded. Logging out now will lose them.",
+  logoutKeepConfirm: "Log out anyway",
   loggedOut: "Logged out",
 };
 

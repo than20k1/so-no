@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAccountT } from "@/lib/i18n/account";
+import { safeNext } from "@/lib/nav";
 import { formatPhone } from "@/lib/phone";
 import type { Me } from "@/lib/sync/account";
 import { accountApi } from "@/lib/sync/api";
@@ -22,8 +23,10 @@ export function useFinishLogin() {
     const { completeLogin } = await import("@/lib/sync");
     const result = await completeLogin(me, { wipeOtherAccount });
     if (result === "mismatch") return setMismatch(me);
-    router.replace("/");
-    toast({ message: t("loggedIn") });
+    // Vào từ màn Chia tiền / link mời thì quay lại đúng chỗ đó.
+    const next = safeNext(new URLSearchParams(window.location.search).get("next"));
+    router.replace(next);
+    toast({ message: t("loggedIn"), showOn: next.split("?")[0].split("#")[0] });
   }
 
   const dialog = mismatch && (

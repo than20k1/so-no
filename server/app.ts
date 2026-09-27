@@ -4,6 +4,7 @@ import { accountRoutes } from "./account.js";
 import { createAuth, type Auth } from "./auth.js";
 import type { Db } from "./db/client.js";
 import { MemoryMailer, type Mailer } from "./mail.js";
+import { groupRoutes } from "./groups.js";
 import { syncRoutes } from "./sync.js";
 
 export interface AppDeps {
@@ -49,6 +50,7 @@ export function createApp(deps: AppDeps) {
 
   app.route("/account", accountRoutes());
   app.route("/sync", syncRoutes());
+  app.route("/groups", groupRoutes());
 
   app.get("/health", async (c) => {
     await deps.db.execute(sql`select 1`);

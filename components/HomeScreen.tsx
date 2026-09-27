@@ -1,26 +1,17 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { useBackupReminder, useDebtors } from "@/lib/ledger/hooks";
 import { formatMoney } from "@/lib/money";
 import { filterByName } from "@/lib/resolve";
-import { MenuIcon, MinusIcon, PlusIcon, SearchIcon } from "./icons";
-import { useInstallHint } from "./InstallHint";
-import { useMenuState } from "./useMenuState";
+import { MinusIcon, PlusIcon, SearchIcon } from "./icons";
+import { MainHeader } from "./MainHeader";
 import { useBackupActions } from "./useBackupActions";
-
-// Menu ít dùng → tải lười cho màn chính nhẹ; service worker vẫn precache nên mở được khi offline.
-const Menu = dynamic(() => import("./Menu"), { ssr: false });
 
 export function HomeScreen() {
   const { t } = useI18n();
-  const menu = useMenuState();
-  // Menu chỉ được nạp ở lần mở đầu, sau đó giữ lại để có hiệu ứng đóng/mở.
-  const [menuLoaded, setMenuLoaded] = useState(false);
-  const installHint = useInstallHint();
   const debtors = useDebtors();
   const [query, setQuery] = useState("");
 
@@ -35,30 +26,12 @@ export function HomeScreen() {
 
   return (
     <>
-      <header className="flex items-center gap-2 px-2 pt-[max(8px,env(safe-area-inset-top))]">
-        <button
-          type="button"
-          onClick={() => {
-            setMenuLoaded(true);
-            menu.show();
-          }}
-          aria-label={t("menu")}
-          aria-expanded={menu.open}
-          className="relative grid size-12 place-items-center rounded-full active:bg-line"
-        >
-          <MenuIcon />
-          {/* Chấm báo: trong menu có gợi ý cài app chưa xem */}
-          {installHint.visible && (
-            <span className="absolute top-2.5 right-2.5 size-2.5 rounded-full bg-add ring-2 ring-background" data-testid="menu-dot" />
-          )}
-        </button>
-        <div className="ml-auto pr-3 text-right">
-          <div className="text-xs text-muted">{t("totalOwed")}</div>
-          <div className="tabular text-xl font-bold" data-testid="total">
-            {debtors ? formatMoney(total) : "—"}
-          </div>
+      <MainHeader mode="ghi-no">
+        <div className="truncate text-xs text-muted">{t("totalOwed")}</div>
+        <div className="tabular truncate text-lg font-bold" data-testid="total">
+          {debtors ? formatMoney(total) : "—"}
         </div>
-      </header>
+      </MainHeader>
 
       <main className="flex flex-1 flex-col gap-4 px-4 pt-3 pb-24">
         <div className="grid grid-cols-2 gap-3">
@@ -122,7 +95,6 @@ export function HomeScreen() {
         )}
       </main>
 
-      {menuLoaded && <Menu open={menu.open} onClose={menu.close} />}
     </>
   );
 }

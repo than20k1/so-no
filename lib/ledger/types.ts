@@ -84,3 +84,12 @@ export interface Meta {
 export function signedAmount(tx: Pick<Transaction, "amount" | "kind">): number {
   return tx.kind === "add" ? tx.amount : -tx.amount;
 }
+
+// ---------------------------------------------------------------------------
+// Chia tiền nhóm — dòng trên máy = dạng trao đổi với server + đánh dấu chờ đẩy.
+// ---------------------------------------------------------------------------
+
+export type Group = import("../groups/wire").WireGroup & SyncMark;
+export type GroupMember = import("../groups/wire").WireMember & SyncMark;
+export type Expense = import("../groups/wire").WireExpense & SyncMark;
+export type GroupEvent = import("../groups/wire").WireGroupEvent & SyncMark;

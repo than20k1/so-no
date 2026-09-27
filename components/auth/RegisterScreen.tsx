@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useAccountT } from "@/lib/i18n/account";
+import { useQueryParam, withNext } from "@/lib/nav";
 import { normalizePhone } from "@/lib/phone";
 import { accountApi } from "@/lib/sync/api";
 import { PageHeader } from "../PageHeader";
@@ -14,6 +15,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export function RegisterScreen() {
   const t = useAccountT();
+  const next = useQueryParam("next");
   const errorText = useErrorText();
   const { finish, dialog } = useFinishLogin();
   const [form, setForm] = useState({ phone: "", email: "", password: "", confirmPassword: "" });
@@ -97,7 +99,7 @@ export function RegisterScreen() {
             <SubmitButton busy={busy}>{t("createAccount")}</SubmitButton>
             <p className="text-center text-sm">
               {t("haveAccount")}{" "}
-              <Link href="/dang-nhap/" replace className="font-semibold underline">
+              <Link href={withNext("/dang-nhap/", next)} replace className="font-semibold underline">
                 {t("login")}
               </Link>
             </p>

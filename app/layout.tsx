@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Providers } from "@/components/Providers";
 import { vi } from "@/lib/i18n/vi";
+import { MODE_REDIRECT_SCRIPT } from "@/lib/mode";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -31,6 +32,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="vi" className="h-full antialiased">
+      <head>
+        {/* Mở lại đúng chế độ dùng lần cuối, trước khi vẽ màn Ghi nợ (design D9). */}
+        <script dangerouslySetInnerHTML={{ __html: MODE_REDIRECT_SCRIPT }} />
+      </head>
       <body className="min-h-full">
         <Providers>
           <div className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col">{children}</div>

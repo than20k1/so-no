@@ -10,6 +10,8 @@ export interface ToastOptions {
   actionLabel?: string;
   onAction?: () => void;
   duration?: number;
+  /** Trang mà toast được phép hiện (mặc định màn chính "/"); chuyển sang trang khác thì toast đóng. */
+  showOn?: string;
 }
 
 interface ToastState extends ToastOptions {
@@ -27,12 +29,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToast({ ...options, id: nextId.current });
   }, []);
 
-  // Rời màn chính (vd. mở form ghi nợ mới) → đóng toast cũ để không che nút Lưu.
-  // Toast "Đã ghi" được bật ngay trước khi chuyển về "/", nên chỉ đóng khi đi tới trang khác "/".
+  // Rời trang của toast (vd. từ màn chính mở form ghi nợ mới) → đóng toast cũ để không che nút Lưu.
+  // Toast được bật ngay trước khi chuyển tới trang của nó, nên chỉ đóng khi đang ở trang khác trang đó.
   const pathname = usePathname();
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- đồng bộ với URL thay đổi
-    if (pathname !== "/") setToast(null);
+    setToast((cur) => (cur && pathname !== (cur.showOn ?? "/") ? null : cur));
   }, [pathname]);
 
   useEffect(() => {

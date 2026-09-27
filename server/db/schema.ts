@@ -13,6 +13,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -181,3 +182,103 @@ export const debtorEvents = pgTable(
   },
   (t) => [index("debtor_events_book_seq_idx").on(t.bookId, t.seq)],
 );
+
+// ---------------------------------------------------------------------------
+// Chia tiền nhóm (change chia-tien-nhom, design D1). Mỗi dòng mang `group_id`; quyền theo thành viên nhóm.
+// ---------------------------------------------------------------------------
+
+export const groups = pgTable("groups", {
+  id: uuid("id").primaryKey(),
+  name: text("name").notNull(),
+  createdByUserId: text("created_by_user_id")
+    .notNull()
+    .references(() => user.id),
+  createdAt: ms("created_at").notNull(),
+  updatedAt: ms("updated_at").notNull(),
+  deletedAt: ms("deleted_at"),
+  /** Giờ server khi nhóm bị xoá — mốc 30 ngày tự ẩn (design D10). */
+  serverDeletedAt: ms("server_deleted_at"),
+  purgedAt: ms("purged_at"),
+  seq: bigint("seq", { mode: "number" }).notNull().default(nextSeq),
+});
+
+export const groupMembers = pgTable(
+  "group_members",
+  {
+    id: uuid("id").primaryKey(),
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    searchKey: text("search_key").notNull(),
+    weight: integer("weight").notNull().default(1),
+    /** null = khách (chỉ có tên). Chỉ đổi qua vào/nhận/rời nhóm, không bao giờ qua đồng bộ. */
+    userId: text("user_id").references(() => user.id),
+    /** Thứ tự vào nhóm — ai nhận phần dư khi làm tròn. */
+    orderKey: ms("order_key").notNull(),
+    createdAt: ms("created_at").notNull(),
+    updatedAt: ms("updated_at").notNull(),
+    removedAt: ms("removed_at"),
+    seq: bigint("seq", { mode: "number" }).notNull().default(nextSeq),
+  },
+  (t) => [
+    index("group_members_group_seq_idx").on(t.groupId, t.seq),
+    index("group_members_user_idx").on(t.userId),
+    uniqueIndex("group_members_group_user_uq").on(t.groupId, t.userId).where(sql`${t.userId} is not null`),
+  ],
+);
+
+export const expenses = pgTable(
+  "expenses",
+  {
+    id: uuid("id").primaryKey(),
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    title: text("title").notNull().default(""),
+    amount: bigint("amount", { mode: "number" }).notNull(),
+    payerMemberId: uuid("payer_member_id").notNull(),
+    toMemberId: uuid("to_member_id"),
+    shares: jsonb("shares"),
+    occurredAt: ms("occurred_at").notNull(),
+    createdAt: ms("created_at").notNull(),
+    updatedAt: ms("updated_at").notNull(),
+    deletedAt: ms("deleted_at"),
+    updatedByUserId: text("updated_by_user_id"),
+    seq: bigint("seq", { mode: "number" }).notNull().default(nextSeq),
+  },
+  (t) => [index("expenses_group_seq_idx").on(t.groupId, t.seq)],
+);
+
+export const groupEvents = pgTable(
+  "group_events",
+  {
+    id: uuid("id").primaryKey(),
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    entity: text("entity").notNull(),
+    entityId: uuid("entity_id").notNull(),
+    kind: text("kind").notNull(),
+    before: jsonb("before"),
+    after: jsonb("after"),
+    at: ms("at").notNull(),
+    /** Server tự gắn theo phiên — máy không khai được "ai làm". */
+    userId: text("user_id"),
+    /** Thành viên của người làm trong nhóm lúc đó — để hiện tên "ai làm" (spec lịch sử nhóm). */
+    actorMemberId: uuid("actor_member_id"),
+    deviceId: text("device_id").notNull().default(""),
+    seq: bigint("seq", { mode: "number" }).notNull().default(nextSeq),
+  },
+  (t) => [index("group_events_group_seq_idx").on(t.groupId, t.seq)],
+);
+
+/** Link mời — không bao giờ đi qua đồng bộ; chỉ đọc qua endpoint cho thành viên (design D6). */
+export const groupInvites = pgTable("group_invites", {
+  groupId: uuid("group_id")
+    .primaryKey()
+    .references(() => groups.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  createdAt: ms("created_at").notNull(),
+});

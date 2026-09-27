@@ -35,3 +35,17 @@ export function useQueryParam(name: string): string | null {
     () => null,
   );
 }
+
+/**
+ * Trang quay lại sau khi đăng nhập (`?next=`). Chỉ nhận đường dẫn trong app ("/..."), không nhận
+ * "//host" hay "/\\host" (trình duyệt hiểu là trang khác) — chống chuyển hướng ra ngoài.
+ */
+export function safeNext(raw: string | null | undefined): string {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.startsWith("/\\")) return "/";
+  return raw;
+}
+
+/** Giữ `?next=` khi chuyển giữa các màn đăng nhập / đăng ký. */
+export function withNext(href: string, next: string | null): string {
+  return next && safeNext(next) !== "/" ? `${href}?next=${encodeURIComponent(next)}` : href;
+}
