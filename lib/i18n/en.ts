@@ -52,8 +52,6 @@ export const en: Dict = {
   importBackup: "Import backup",
   installGuide: "Add to home screen",
   loginSync: "Sign in / Sync",
-  comingSoon: "Coming soon",
-  comingSoonMessage: "Sign-in and sync are coming in a later version.",
   exportDone: "Backup file created",
   exportFailed: "Could not export the backup.",
   importSummary: "File has {debtors} people, {transactions} transactions. Will add {newDebtors} people, {newTransactions} transactions; skip {skipped} existing rows.",
@@ -99,4 +97,5 @@ export const en: Dict = {
   evPurge: "Deleted forever",
   evCreated: "Created",
   emptyValue: "(empty)",
+  evRestoreAdmin: "Restored (admin)",
 };

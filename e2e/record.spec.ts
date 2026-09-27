@@ -120,6 +120,9 @@ test.describe("chưa có service worker (lần mở đầu)", () => {
   test("lưu khi mất mạng vẫn thành công và quay về màn chính", async ({ page, context }) => {
     await addButton(page).click();
     await expect(page.locator("#name")).toBeFocused();
+    // Màn Ghi nợ tải trước màn chính ngay khi mở (router.prefetch) — người dùng thật luôn mất vài giây để gõ,
+    // nên chờ việc tải trước xong rồi mới tắt mạng (tránh test canh giờ quá sát).
+    await page.waitForLoadState("networkidle");
     await context.setOffline(true);
     await page.locator("#name").fill("Anh Tú");
     await page.locator("#amount").fill("80");

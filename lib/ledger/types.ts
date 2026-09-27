@@ -3,6 +3,11 @@ export type TxKind = "add" | "pay";
 export type TxDirection = "they_owe" | "i_owe";
 export type TxSource = "manual" | "backup" | "scan";
 
+/** Đánh dấu dòng còn chờ đẩy lên server (1) hay đã khớp server (0) — chỉ lớp đồng bộ dùng. */
+export interface SyncMark {
+  _dirty?: 0 | 1;
+}
+
 /** Sổ nợ. Bản 1 có đúng một sổ mặc định; nhiều người dùng chung sổ ở bản sau. */
 export interface Book {
   id: string;
@@ -10,7 +15,7 @@ export interface Book {
   createdAt: number;
 }
 
-export interface Debtor {
+export interface Debtor extends SyncMark {
   id: string;
   bookId: string;
   name: string;
@@ -38,7 +43,7 @@ export interface DebtorFields {
 }
 
 /** Dấu vết thay đổi người nợ — chỉ ghi thêm, không bao giờ sửa/xoá. */
-export interface DebtorEvent {
+export interface DebtorEvent extends SyncMark {
   id: string;
   bookId: string;
   debtorId: string;
@@ -50,7 +55,7 @@ export interface DebtorEvent {
   deviceId: string;
 }
 
-export interface Transaction {
+export interface Transaction extends SyncMark {
   id: string;
   bookId: string;
   debtorId: string;

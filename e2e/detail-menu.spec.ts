@@ -36,7 +36,7 @@ test("chi tiết: lịch sử mới nhất ở trên, dòng hủy vẫn hiện; 
   await expect(page.getByTestId("selected-person")).toContainText("Chị Lan");
 });
 
-test("menu: mở, nút quay lại đóng menu và vẫn ở màn chính; mục đăng nhập 'sắp có'", async ({ page }) => {
+test("menu: mở, nút quay lại đóng menu và vẫn ở màn chính; mục đăng nhập mở màn đăng nhập", async ({ page }) => {
   await openHome(page);
   await page.getByRole("button", { name: "Menu" }).click();
   const dialog = page.getByRole("dialog");
@@ -51,13 +51,18 @@ test("menu: mở, nút quay lại đóng menu và vẫn ở màn chính; mục �
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("link", { name: "Ghi nợ" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Menu" }).click();
-  await page.getByRole("button", { name: /Đăng nhập \/ Đồng bộ/ }).click();
-  await expect(page.getByRole("status")).toContainText("phiên bản sau");
-  await expect(page).toHaveURL(/\/(#menu)?$/);
-
   // Đóng bằng chạm ra ngoài
+  await page.getByRole("button", { name: "Menu" }).click();
   await page.getByTestId("menu-backdrop").click({ position: { x: 340, y: 300 } });
+  await expect(dialog).toBeHidden();
+
+  // Mục đăng nhập mở màn đăng nhập; quay lại thì về màn chính với menu đã đóng.
+  await page.getByRole("button", { name: "Menu" }).click();
+  await page.getByRole("link", { name: /Đăng nhập \/ Đồng bộ/ }).click();
+  await expect(page).toHaveURL(/\/dang-nhap\/$/);
+  await expect(page.getByRole("link", { name: "Quên mật khẩu?" })).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL(/\/$/);
   await expect(dialog).toBeHidden();
 });
 

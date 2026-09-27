@@ -14,11 +14,15 @@ Màn chính SHALL hiển thị hai nút "Ghi nợ" và "Trừ nợ" có thể b�
 - **THEN** hai nút lớn bấm được trong vòng 1 giây
 
 ### Requirement: Hoạt động offline
-Sau lần mở đầu tiên thành công, toàn bộ chức năng của bản này (ghi nợ, trừ nợ, xem danh sách, xem chi tiết, hoàn tác, xuất và nhập sao lưu, đổi ngôn ngữ) SHALL hoạt động khi không có mạng.
+Sau lần mở đầu tiên thành công, toàn bộ chức năng của app (ghi nợ, trừ nợ, xem danh sách, xem chi tiết, hoàn tác, sửa và xoá người nợ, thùng rác, khôi phục, xoá hẳn, xuất và nhập sao lưu, đổi ngôn ngữ) SHALL hoạt động khi không có mạng.
 
 #### Scenario: Mở app khi mất mạng
 - **WHEN** thiết bị ở chế độ máy bay và người dùng mở app đã từng dùng
 - **THEN** màn chính hiện ra đầy đủ dữ liệu và ghi nợ được
+
+#### Scenario: Xoá và khôi phục khi mất mạng
+- **WHEN** thiết bị ở chế độ máy bay, người dùng xoá một người rồi mở Thùng rác và khôi phục
+- **THEN** cả hai thao tác thành công và người đó trở lại danh sách
 
 ### Requirement: Cài đặt như ứng dụng
 App SHALL cài được ra màn hình chính điện thoại, mở ở chế độ toàn màn hình không có thanh địa chỉ, có tên và biểu tượng riêng.

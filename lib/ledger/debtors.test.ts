@@ -146,3 +146,20 @@ describe("thùng rác", () => {
     expect((await getDb().debtors.get(tu.id))?.deletedAt).not.toBeNull();
   });
 });
+
+describe("giờ server khi đã đăng nhập", () => {
+  it("đồng hồ máy chạy trước 20 ngày: chưa cho xoá hẳn, chưa tự xoá hẳn", async () => {
+    const { setMeta } = await import("./db");
+    const tu = await newDebtor("Anh Tú");
+    // Máy tưởng đã xoá từ 20 ngày trước, nhưng theo server thì vừa xoá.
+    await deleteDebtor(tu.id, Date.now() - 20 * DAY);
+    await setMeta("accountUserId", "u1");
+    await setMeta("serverOffset", -20 * DAY);
+    await expect(purgeDebtor(tu.id)).rejects.toMatchObject({ code: "purge_too_early" });
+    expect(await purgeExpired()).toBe(0);
+
+    // Chưa đăng nhập thì chỉ dựa vào giờ máy như trước.
+    await setMeta("accountUserId", undefined);
+    await expect(purgeDebtor(tu.id)).resolves.toBeTruthy();
+  });
+});

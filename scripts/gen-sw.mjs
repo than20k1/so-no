@@ -61,6 +61,8 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin || url.pathname === "/sw.js") return;
+  // Tài khoản và đồng bộ luôn đi thẳng ra mạng, không bao giờ trả từ cache.
+  if (url.pathname.startsWith("/api/")) return;
 
   event.respondWith(
     (async () => {

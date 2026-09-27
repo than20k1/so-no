@@ -6,6 +6,7 @@ import { initInstallCapture } from "@/lib/install";
 import { getContext } from "@/lib/ledger/db";
 import { purgeExpired } from "@/lib/ledger/debtors";
 import { useTrackNavigation } from "@/lib/nav";
+import { readAccountMarker } from "@/lib/sync/marker";
 import { ToastProvider } from "./Toast";
 
 initInstallCapture();
@@ -25,6 +26,13 @@ export function Providers({ children }: { children: ReactNode }) {
     getContext()
       .then(() => purgeExpired())
       .catch(() => {});
+  }, []);
+  // Đã đăng nhập → tải lười bộ đồng bộ khi trình duyệt rảnh; chưa đăng nhập thì không tải gì (design D11).
+  useEffect(() => {
+    if (!readAccountMarker()) return;
+    const load = () => void import("@/lib/sync").then((m) => m.start());
+    if ("requestIdleCallback" in window) requestIdleCallback(load, { timeout: 3000 });
+    else setTimeout(load, 1000);
   }, []);
   useTrackNavigation();
 

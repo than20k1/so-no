@@ -159,7 +159,7 @@ export function EditHistory({ events, createdAt }: { events: DebtorEvent[]; crea
       case "delete":
         return [t("evDelete")];
       case "restore":
-        return [t("evRestore")];
+        return [e.deviceId === "admin" ? t("evRestoreAdmin") : t("evRestore")];
       case "purge":
         return [t("evPurge")];
     }

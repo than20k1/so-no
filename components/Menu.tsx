@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useI18n, type Lang } from "@/lib/i18n";
 import { useBackupReminder, useTrashCount } from "@/lib/ledger/hooks";
+import { AccountSection } from "./AccountSection";
 import { CloseIcon } from "./icons";
 import { InstallHint, InstallInstructions } from "./InstallHint";
-import { useToast } from "./Toast";
 import { useBackupActions } from "./useBackupActions";
 
 const LANGS: { value: Lang; label: string }[] = [
@@ -16,7 +16,6 @@ const LANGS: { value: Lang; label: string }[] = [
 
 export default function Menu({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t, lang, setLang } = useI18n();
-  const toast = useToast();
   const reminder = useBackupReminder();
   const trashCount = useTrashCount();
   const { exportNow, pickFile, pending, confirmImport, cancelImport } = useBackupActions();
@@ -72,6 +71,8 @@ export default function Menu({ open, onClose }: { open: boolean; onClose: () => 
         </div>
 
         <InstallHint />
+
+        <AccountSection itemClass={item} />
 
         <div className="px-3 pt-2 pb-1 text-sm font-medium text-muted">{t("language")}</div>
         <div className="grid grid-cols-2 gap-2 px-3 pb-3" role="radiogroup" aria-label={t("language")}>
@@ -159,10 +160,6 @@ export default function Menu({ open, onClose }: { open: boolean; onClose: () => 
             <InstallInstructions />
           </div>
         )}
-        <button type="button" className={item} onClick={() => toast({ message: t("comingSoonMessage") })}>
-          <span className="flex-1">{t("loginSync")}</span>
-          <span className="rounded-full bg-line px-2 py-0.5 text-xs text-muted">{t("comingSoon")}</span>
-        </button>
       </nav>
     </div>
   );

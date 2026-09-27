@@ -1,6 +1,6 @@
 import { newId } from "../id";
 import { cleanDisplayName, normalizeName } from "../text";
-import { getContext, getDb, readBookId } from "./db";
+import { getContext, getDb, getMeta, readBookId } from "./db";
 import { LedgerError } from "./ledger";
 import type { Debtor, DebtorEvent, DebtorEventKind, DebtorFields } from "./types";
 
@@ -28,6 +28,15 @@ export function trashState(deletedAt: number, now = Date.now()): TrashState {
     autoPurgeAt,
     daysLeft: Math.max(0, Math.ceil((autoPurgeAt - now) / DAY_MS)),
   };
+}
+
+/**
+ * "Bây giờ" dùng cho mốc thùng rác: khi đã đăng nhập, lấy theo giờ server (lệch so với máy được lưu sau mỗi lượt
+ * đồng bộ), để chỉnh đồng hồ điện thoại không lách được mốc 15/30 ngày (spec cloud-sync, design D10).
+ */
+export async function trustedNow(): Promise<number> {
+  const [account, offset] = await Promise.all([getMeta<string>("accountUserId"), getMeta<number>("serverOffset")]);
+  return Date.now() + (account && typeof offset === "number" ? offset : 0);
 }
 
 /**
@@ -101,7 +110,8 @@ export function restoreDebtor(debtorId: string, now = Date.now()): Promise<Debto
 }
 
 /** Xoá hẳn = ẩn vĩnh viễn; dữ liệu vẫn nằm trên máy và trong file sao lưu. Chỉ được khi đã đủ 15 ngày. */
-export function purgeDebtor(debtorId: string, now = Date.now()): Promise<Debtor> {
+export async function purgeDebtor(debtorId: string, now?: number): Promise<Debtor> {
+  now ??= await trustedNow();
   return mutate(
     debtorId,
     "purge",
@@ -127,9 +137,11 @@ export async function listTrash(): Promise<Debtor[]> {
 }
 
 /** Tự xoá hẳn những người đã nằm thùng rác đủ 30 ngày. Trả số người vừa xoá hẳn. */
-export async function purgeExpired(now = Date.now()): Promise<number> {
-  const expired = (await listTrash()).filter((d) => now >= trashState(d.deletedAt!, now).autoPurgeAt);
-  for (const d of expired) await purgeDebtor(d.id, now);
+export async function purgeExpired(now?: number): Promise<number> {
+  now ??= await trustedNow();
+  const at = now;
+  const expired = (await listTrash()).filter((d) => at >= trashState(d.deletedAt!, at).autoPurgeAt);
+  for (const d of expired) await purgeDebtor(d.id, at);
   return expired.length;
 }
 

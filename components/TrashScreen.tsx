@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { formatDate } from "@/lib/date";
 import { useI18n } from "@/lib/i18n";
-import { purgeDebtor, purgeExpired, restoreDebtor, trashState, type Debtor } from "@/lib/ledger";
+import { purgeDebtor, purgeExpired, restoreDebtor, trashState, trustedNow, type Debtor } from "@/lib/ledger";
 import { useTrash } from "@/lib/ledger/hooks";
 import { formatMoney } from "@/lib/money";
 import { PageHeader } from "./PageHeader";
@@ -13,12 +13,18 @@ import { useToast } from "./Toast";
 export function TrashScreen() {
   const { t } = useI18n();
   const trash = useTrash();
-  // Chụp thời điểm mở trang để tính mốc 15/30 ngày (không gọi Date.now() lúc render).
-  const [now] = useState(() => Date.now());
+  // Chụp thời điểm mở trang để tính mốc 15/30 ngày (không gọi Date.now() lúc render);
+  // khi đã đăng nhập thì chỉnh theo giờ server.
+  const [now, setNow] = useState(() => Date.now());
 
   // Mở thùng rác cũng dọn luôn người đã đủ 30 ngày (ngoài lần dọn lúc mở app).
   useEffect(() => {
-    purgeExpired().catch(() => {});
+    trustedNow()
+      .then((t) => {
+        setNow(t);
+        return purgeExpired(t);
+      })
+      .catch(() => {});
   }, []);
 
   return (

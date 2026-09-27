@@ -50,8 +50,6 @@ export const vi = {
   importBackup: "Nhập sao lưu",
   installGuide: "Cài ra màn hình chính",
   loginSync: "Đăng nhập / Đồng bộ",
-  comingSoon: "Sắp có",
-  comingSoonMessage: "Đăng nhập và đồng bộ sẽ có ở phiên bản sau.",
   exportDone: "Đã tạo file sao lưu",
   exportFailed: "Không xuất được sao lưu.",
   importSummary: "File có {debtors} người, {transactions} giao dịch. Sẽ thêm {newDebtors} người, {newTransactions} giao dịch; bỏ qua {skipped} dòng đã có.",
@@ -97,6 +95,7 @@ export const vi = {
   evPurge: "Xoá hẳn",
   evCreated: "Tạo người nợ",
   emptyValue: "(trống)",
+  evRestoreAdmin: "Khôi phục (admin)",
 };
 
 export type Dict = Record<keyof typeof vi, string>;
