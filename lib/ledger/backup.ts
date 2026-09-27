@@ -2,27 +2,32 @@ import { isoDay } from "../date";
 import { normalizeName } from "../text";
 import { getContext, getDb, getMeta, setMeta } from "./db";
 import { recomputeBalance } from "./ledger";
-import type { Book, Debtor, Transaction } from "./types";
+import type { Book, Debtor, DebtorEvent, Transaction } from "./types";
 
 export const BACKUP_FORMAT = "ghi-no-backup";
-export const BACKUP_VERSION = 1;
+/** Bản 2 thêm lịch sử sửa và trạng thái xoá. Vẫn đọc được file bản 1. */
+export const BACKUP_VERSION = 2;
+const SUPPORTED_VERSIONS: readonly number[] = [1, 2];
 
 export interface BackupFile {
   format: typeof BACKUP_FORMAT;
   version: typeof BACKUP_VERSION;
   exportedAt: string;
   books: Book[];
+  /** Gồm cả người đã xoá và đã xoá hẳn. */
   debtors: Debtor[];
   transactions: Transaction[];
+  debtorEvents: DebtorEvent[];
 }
 
 export async function buildBackup(now = Date.now()): Promise<BackupFile> {
   await getContext();
   const d = getDb();
-  const [books, debtors, transactions] = await Promise.all([
+  const [books, debtors, transactions, debtorEvents] = await Promise.all([
     d.books.toArray(),
     d.debtors.toArray(),
     d.transactions.toArray(),
+    d.debtorEvents.toArray(),
   ]);
   return {
     format: BACKUP_FORMAT,
@@ -31,6 +36,7 @@ export async function buildBackup(now = Date.now()): Promise<BackupFile> {
     books,
     debtors,
     transactions,
+    debtorEvents,
   };
 }
 
@@ -54,6 +60,13 @@ const isNumOrNull = (v: unknown) => v === null || isNum(v);
 function validDebtor(v: unknown): v is Debtor {
   const d = v as Debtor;
   return !!d && isStr(d.id) && isStr(d.name) && d.name.trim() !== "" && isNum(d.createdAt);
+}
+
+const EVENT_KINDS = new Set(["edit", "delete", "restore", "purge"]);
+
+function validEvent(v: unknown): v is DebtorEvent {
+  const e = v as DebtorEvent;
+  return !!e && isStr(e.id) && isStr(e.debtorId) && EVENT_KINDS.has(e.kind) && isNum(e.at);
 }
 
 function validTx(v: unknown): v is Transaction {
@@ -81,10 +94,21 @@ export function parseBackup(text: string): ParseBackupResult {
   }
   const f = raw as Partial<BackupFile>;
   if (!f || typeof f !== "object" || f.format !== BACKUP_FORMAT) return { ok: false, error: "wrong_format" };
-  if (f.version !== BACKUP_VERSION) return { ok: false, error: "unsupported_version" };
+  if (!SUPPORTED_VERSIONS.includes(f.version as number)) return { ok: false, error: "unsupported_version" };
   if (!Array.isArray(f.debtors) || !Array.isArray(f.transactions)) return { ok: false, error: "invalid_data" };
   if (!f.debtors.every(validDebtor) || !f.transactions.every(validTx)) return { ok: false, error: "invalid_data" };
-  return { ok: true, data: { ...(f as BackupFile), books: Array.isArray(f.books) ? f.books : [] } };
+  // File bản 1 không có lịch sử sửa; người nợ thiếu trạng thái xoá được coi là chưa xoá khi nhập.
+  const debtorEvents = f.debtorEvents ?? [];
+  if (!Array.isArray(debtorEvents) || !debtorEvents.every(validEvent)) return { ok: false, error: "invalid_data" };
+  return {
+    ok: true,
+    data: {
+      ...(f as BackupFile),
+      version: BACKUP_VERSION,
+      books: Array.isArray(f.books) ? f.books : [],
+      debtorEvents,
+    },
+  };
 }
 
 export interface ImportPreview {
@@ -120,8 +144,9 @@ export async function previewBackupImport(data: BackupFile): Promise<ImportPrevi
 }
 
 /**
- * Gộp file sao lưu vào sổ hiện tại theo mã định danh: dòng đã có thì bỏ qua,
- * dòng mới giữ nguyên trường gốc (thời điểm tạo, nguồn, trạng thái hủy...).
+ * Gộp file sao lưu vào sổ hiện tại theo mã định danh: dòng đã có thì bỏ qua (kể cả người nợ —
+ * không ghi đè trạng thái xoá trên máy), dòng mới giữ nguyên trường gốc (thời điểm tạo, nguồn,
+ * trạng thái hủy, trạng thái xoá...).
  * Bản 1 chỉ có một sổ nên mọi dòng được đưa về sổ hiện tại của máy.
  */
 export async function applyBackupImport(data: BackupFile): Promise<ImportPreview> {
@@ -130,9 +155,10 @@ export async function applyBackupImport(data: BackupFile): Promise<ImportPreview
 
   const { bookId } = await getContext();
   const d = getDb();
-  await d.transaction("rw", d.debtors, d.transactions, async () => {
+  await d.transaction("rw", d.debtors, d.transactions, d.debtorEvents, async () => {
     const existingDebtorIds = new Set(await d.debtors.toCollection().primaryKeys());
     const existingTxIds = new Set(await d.transactions.toCollection().primaryKeys());
+    const existingEventIds = new Set(await d.debtorEvents.toCollection().primaryKeys());
 
     const debtors: Debtor[] = data.debtors
       .filter((x) => !existingDebtorIds.has(x.id))
@@ -146,6 +172,8 @@ export async function applyBackupImport(data: BackupFile): Promise<ImportPreview
         lastTxAt: 0,
         createdAt: x.createdAt,
         updatedAt: isNum(x.updatedAt) ? x.updatedAt : x.createdAt,
+        deletedAt: isNum(x.deletedAt) ? x.deletedAt : null,
+        purgedAt: isNum(x.purgedAt) ? x.purgedAt : null,
       }));
 
     const transactions: Transaction[] = data.transactions
@@ -166,8 +194,22 @@ export async function applyBackupImport(data: BackupFile): Promise<ImportPreview
         deviceId: isStr(x.deviceId) ? x.deviceId : "",
       }));
 
+    const debtorEvents: DebtorEvent[] = data.debtorEvents
+      .filter((x) => !existingEventIds.has(x.id))
+      .map((x) => ({
+        id: x.id,
+        bookId,
+        debtorId: x.debtorId,
+        kind: x.kind,
+        before: x.before ?? null,
+        after: x.after ?? null,
+        at: x.at,
+        deviceId: isStr(x.deviceId) ? x.deviceId : "",
+      }));
+
     await d.debtors.bulkAdd(debtors);
     await d.transactions.bulkAdd(transactions);
+    await d.debtorEvents.bulkAdd(debtorEvents);
 
     const touched = new Set([...debtors.map((x) => x.id), ...transactions.map((x) => x.debtorId)]);
     for (const id of touched) await recomputeBalance(id);

@@ -1,8 +1,12 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { I18nProvider, LANG_STORAGE_KEY, useI18n } from "@/lib/i18n";
 import { en } from "@/lib/i18n/en";
 import { vi as viDict } from "@/lib/i18n/vi";
+import { resetDbForTests } from "@/lib/ledger/db";
+import { deleteDebtor, listTrash } from "@/lib/ledger/debtors";
+import { addDebt } from "@/lib/ledger/ledger";
+import { Providers } from "./Providers";
 import { TOAST_DURATION_MS, ToastProvider, useToast } from "./Toast";
 
 afterEach(() => {
@@ -76,5 +80,19 @@ describe("Toast", () => {
     fireEvent.click(screen.getByText("Hoàn tác"));
     expect(onUndo).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole("status")).toBeNull();
+  });
+});
+
+describe("Providers", () => {
+  it("mở app thì tự xoá hẳn người đã nằm thùng rác đủ 30 ngày", async () => {
+    await resetDbForTests();
+    const day = 24 * 60 * 60 * 1000;
+    const old = (await addDebt({ target: { newDebtor: { name: "Anh Tú" } }, amount: 1000 })).debtor;
+    const recent = (await addDebt({ target: { newDebtor: { name: "Cô Ba" } }, amount: 1000 })).debtor;
+    await deleteDebtor(old.id, Date.now() - 31 * day);
+    await deleteDebtor(recent.id, Date.now() - day);
+
+    render(<Providers>app</Providers>);
+    await waitFor(async () => expect((await listTrash()).map((d) => d.id)).toEqual([recent.id]));
   });
 });

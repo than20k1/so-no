@@ -2,8 +2,9 @@
 
 import { useLiveQuery } from "dexie-react-hooks";
 import { getBackupState, needsBackupReminder } from "./backup";
+import { getDebtorEvents, listTrash } from "./debtors";
 import { getDebtor, getHistory, listDebtors } from "./ledger";
-import type { Debtor, Transaction } from "./types";
+import type { Debtor, DebtorEvent, Transaction } from "./types";
 
 /** Toàn bộ người nợ của sổ hiện tại; `undefined` khi đang tải lần đầu. Tự cập nhật khi dữ liệu đổi. */
 export function useDebtors(): Debtor[] | undefined {
@@ -27,4 +28,19 @@ export function useBackupReminder(): boolean {
 /** Sổ đã có ít nhất một giao dịch chưa — dùng cho gợi ý cài app. */
 export function useHasTransactions(): boolean {
   return useLiveQuery(async () => (await getBackupState()).lastTxAt !== null, [], false);
+}
+
+/** Người trong thùng rác; `undefined` khi đang tải. */
+export function useTrash(): Debtor[] | undefined {
+  return useLiveQuery(listTrash, []);
+}
+
+/** Số người trong thùng rác — cho mục "Thùng rác (n)" của menu. */
+export function useTrashCount(): number {
+  return useLiveQuery(async () => (await listTrash()).length, [], 0);
+}
+
+/** Lịch sử sửa của một người, mới nhất ở trên. */
+export function useDebtorEvents(debtorId: string | null): DebtorEvent[] | undefined {
+  return useLiveQuery(async () => (debtorId ? getDebtorEvents(debtorId) : []), [debtorId]);
 }

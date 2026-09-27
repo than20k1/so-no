@@ -1,12 +1,13 @@
 import Dexie, { type EntityTable } from "dexie";
 import { newId } from "../id";
-import type { Book, Debtor, Meta, Transaction } from "./types";
+import type { Book, Debtor, DebtorEvent, Meta, Transaction } from "./types";
 
 export class SoNoDB extends Dexie {
   books!: EntityTable<Book, "id">;
   debtors!: EntityTable<Debtor, "id">;
   transactions!: EntityTable<Transaction, "id">;
   meta!: EntityTable<Meta, "key">;
+  debtorEvents!: EntityTable<DebtorEvent, "id">;
 
   constructor(name = "so-no") {
     super(name);
@@ -17,6 +18,18 @@ export class SoNoDB extends Dexie {
       transactions: "id, bookId, debtorId, createdAt",
       meta: "key",
     });
+    // Bản 2: sửa/xoá người nợ. Người nợ cũ được coi là chưa xoá.
+    this.version(2)
+      .stores({ debtorEvents: "id, debtorId, bookId, at" })
+      .upgrade((tx) =>
+        tx
+          .table("debtors")
+          .toCollection()
+          .modify((d: Partial<Debtor>) => {
+            d.deletedAt ??= null;
+            d.purgedAt ??= null;
+          }),
+      );
   }
 }
 

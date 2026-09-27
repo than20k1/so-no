@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import type { ReactNode } from "react";
 import { useI18n } from "@/lib/i18n";
 import { hasInAppHistory } from "@/lib/nav";
 import { BackIcon } from "./icons";
@@ -14,7 +15,8 @@ export function useGoBack() {
   };
 }
 
-export function PageHeader({ title }: { title: string }) {
+/** `action`: nút phụ ở góc phải (vd. "Sửa"). */
+export function PageHeader({ title, action }: { title: string; action?: ReactNode }) {
   const { t } = useI18n();
   const goBack = useGoBack();
   return (
@@ -27,7 +29,8 @@ export function PageHeader({ title }: { title: string }) {
       >
         <BackIcon />
       </button>
-      <h1 className="truncate text-xl font-bold">{title}</h1>
+      <h1 className="min-w-0 flex-1 truncate text-xl font-bold">{title}</h1>
+      {action}
     </header>
   );
 }

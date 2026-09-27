@@ -11,6 +11,7 @@ import {
   previewBackupImport,
 } from "./backup";
 import { getDb, resetDbForTests } from "./db";
+import { deleteDebtor, editDebtor, getDebtorEvents, listTrash, purgeDebtor } from "./debtors";
 import { addDebt, listDebtors, payDebt, voidTransaction } from "./ledger";
 
 beforeEach(async () => {
@@ -30,7 +31,7 @@ describe("xuất sao lưu", () => {
     await seed();
     const file = await buildBackup();
     expect(file.format).toBe("ghi-no-backup");
-    expect(file.version).toBe(1);
+    expect(file.version).toBe(2);
     expect(file.debtors).toHaveLength(2);
     expect(file.transactions).toHaveLength(4);
     expect(file.transactions.filter((t) => t.voidedAt !== null)).toHaveLength(1);
@@ -141,5 +142,90 @@ describe("nhắc sao lưu", () => {
     const s = await getBackupState();
     expect(s.lastBackupAt).toBe(123);
     expect(s.firstTxAt).toBeLessThanOrEqual(s.lastTxAt!);
+  });
+});
+
+describe("sao lưu bản 2: lịch sử sửa và trạng thái xoá", () => {
+  const DAY = 24 * 60 * 60 * 1000;
+
+  async function seedLifecycle() {
+    const t0 = Date.now() - 40 * DAY;
+    const tu = (await addDebt({ target: { newDebtor: { name: "Anh Tu" } }, amount: 150000 })).debtor;
+    await editDebtor(tu.id, { name: "Anh Tú", note: "cá" });
+    await deleteDebtor(tu.id, t0);
+    await purgeDebtor(tu.id, t0 + 20 * DAY);
+    const ba = (await addDebt({ target: { newDebtor: { name: "Cô Ba" } }, amount: 1000 })).debtor;
+    await deleteDebtor(ba.id);
+    return { tu, ba };
+  }
+
+  it("file xuất có người đã xoá hẳn, đủ giao dịch và lịch sử sửa", async () => {
+    const { tu } = await seedLifecycle();
+    const file = await buildBackup();
+    const exportedTu = file.debtors.find((d) => d.id === tu.id);
+    expect(exportedTu?.purgedAt).not.toBeNull();
+    expect(exportedTu?.deletedAt).not.toBeNull();
+    expect(file.transactions.filter((t) => t.debtorId === tu.id)).toHaveLength(1);
+    expect(file.debtorEvents.filter((e) => e.debtorId === tu.id).map((e) => e.kind).sort()).toEqual([
+      "delete",
+      "edit",
+      "purge",
+    ]);
+  });
+
+  it("nhập vào máy trống ra dữ liệu giống hệt; nhập lại không nhân đôi sự kiện", async () => {
+    const { tu, ba } = await seedLifecycle();
+    const text = JSON.stringify(await buildBackup());
+    const eventCount = (await getDb().debtorEvents.count());
+
+    await resetDbForTests();
+    const parsed = parseBackup(text);
+    if (!parsed.ok) throw new Error(parsed.error);
+    await applyBackupImport(parsed.data);
+
+    expect(await listDebtors()).toEqual([]);
+    expect((await listTrash()).map((d) => d.id)).toEqual([ba.id]);
+    const restoredTu = await getDb().debtors.get(tu.id);
+    expect(restoredTu).toMatchObject({ name: "Anh Tú", note: "cá", balance: 150000 });
+    expect(restoredTu?.purgedAt).not.toBeNull();
+    expect(await getDebtorEvents(tu.id)).toHaveLength(3);
+
+    await applyBackupImport(parsed.data);
+    expect(await getDb().debtorEvents.count()).toBe(eventCount);
+  });
+
+  it("nhập file bản 1: người nợ và giao dịch đầy đủ, tất cả chưa xoá", async () => {
+    await seed();
+    const v2 = await buildBackup();
+    // Dựng lại đúng dạng file bản 1: không có lịch sử sửa, người nợ không có trạng thái xoá.
+    const v1 = {
+      ...v2,
+      version: 1,
+      debtorEvents: undefined,
+      debtors: v2.debtors.map((d) => {
+        const rest: Partial<typeof d> = { ...d };
+        delete rest.deletedAt;
+        delete rest.purgedAt;
+        return rest;
+      }),
+    };
+
+    await resetDbForTests();
+    const parsed = parseBackup(JSON.stringify(v1));
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    await applyBackupImport(parsed.data);
+
+    const debtors = await listDebtors();
+    expect(debtors).toHaveLength(2);
+    expect(debtors.every((d) => d.deletedAt === null && d.purgedAt === null)).toBe(true);
+    expect(await getDb().transactions.count()).toBe(4);
+  });
+
+  it("từ chối phiên bản chưa hỗ trợ", () => {
+    expect(parseBackup(JSON.stringify({ format: "ghi-no-backup", version: 3, debtors: [], transactions: [] }))).toEqual({
+      ok: false,
+      error: "unsupported_version",
+    });
   });
 });

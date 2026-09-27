@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" fill="#b4321f"/>
+<g transform="translate(21 0)">
+<rect x="112" y="92" width="240" height="316" rx="26" fill="#fbf6ec"/>
+<path d="M138 92h34v316h-34a26 26 0 0 1-26-26V118a26 26 0 0 1 26-26z" fill="#7a1d10"/>
+<g stroke="#d8cdb8" stroke-width="12" stroke-linecap="round"><line x1="204" y1="168" x2="320" y2="168"/><line x1="204" y1="216" x2="320" y2="216"/><line x1="204" y1="264" x2="262" y2="264"/></g>
+<g transform="rotate(-14 262 322)"><rect x="176" y="276" width="172" height="92" rx="14" fill="#fbf6ec" stroke="#b4321f" stroke-width="12"/>
+<rect x="190" y="290" width="144" height="64" rx="8" fill="none" stroke="#b4321f" stroke-width="4"/>
+<text x="262" y="345" text-anchor="middle" font-size="62" fill="#b4321f" style="font-family:system-ui,-apple-system,sans-serif;font-weight:800;letter-spacing:2px">NỢ</text></g>
+</g></svg>

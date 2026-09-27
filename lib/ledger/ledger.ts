@@ -21,7 +21,13 @@ export interface RecordResult {
 
 export class LedgerError extends Error {
   constructor(
-    public code: "invalid_amount" | "invalid_name" | "debtor_not_found" | "tx_not_found",
+    public code:
+      | "invalid_amount"
+      | "invalid_name"
+      | "debtor_not_found"
+      | "debtor_deleted"
+      | "purge_too_early"
+      | "tx_not_found",
     message = code,
   ) {
     super(message);
@@ -47,6 +53,8 @@ function makeDebtor(bookId: string, name: string, note: string, now: number): De
     lastTxAt: 0,
     createdAt: now,
     updatedAt: now,
+    deletedAt: null,
+    purgedAt: null,
   };
 }
 
@@ -60,7 +68,9 @@ async function record(kind: TxKind, input: RecordInput): Promise<RecordResult> {
     let debtor: Debtor;
     if ("debtorId" in input.target) {
       const found = await d.debtors.get(input.target.debtorId);
-      if (!found) throw new LedgerError("debtor_not_found");
+      if (!found || found.purgedAt) throw new LedgerError("debtor_not_found");
+      // Người trong thùng rác phải được khôi phục trước (spec debtor-management).
+      if (found.deletedAt) throw new LedgerError("debtor_deleted");
       debtor = found;
     } else {
       // Trừ nợ chỉ dành cho người đã có (spec debt-recording).
@@ -158,14 +168,22 @@ export async function recomputeBalance(debtorId: string): Promise<Debtor | undef
   });
 }
 
+/** Người nợ đang dùng (chưa cho vào thùng rác) — nguồn chung cho màn chính, gợi ý và ghép tên. */
+export function isActive(d: Debtor): boolean {
+  return !d.deletedAt;
+}
+
+/** Người nợ đang dùng của sổ hiện tại. */
 export async function listDebtors(): Promise<Debtor[]> {
   const bookId = await readBookId();
   if (!bookId) return [];
-  return getDb().debtors.where("bookId").equals(bookId).toArray();
+  return getDb().debtors.where("bookId").equals(bookId).filter(isActive).toArray();
 }
 
+/** Cả người trong thùng rác; người đã xoá hẳn coi như không tồn tại. */
 export async function getDebtor(id: string): Promise<Debtor | undefined> {
-  return getDb().debtors.get(id);
+  const debtor = await getDb().debtors.get(id);
+  return debtor && !debtor.purgedAt ? debtor : undefined;
 }
 
 /** Lịch sử của một người, mới nhất ở trên. */
@@ -203,7 +221,7 @@ export async function importBatch(rows: ImportRow[], source: TxSource): Promise<
   const d = getDb();
 
   return d.transaction("rw", d.debtors, d.transactions, async () => {
-    const existing = await d.debtors.where("bookId").equals(bookId).toArray();
+    const existing = await d.debtors.where("bookId").equals(bookId).filter(isActive).toArray();
     const now = Date.now();
     const errors: ImportRowError[] = [];
     // Người mới tạo trong cùng lô được dùng lại cho các dòng sau có cùng tên.

@@ -24,6 +24,30 @@ export interface Debtor {
   lastTxAt: number;
   createdAt: number;
   updatedAt: number;
+  /** Thời điểm cho vào thùng rác; `null` = đang dùng. */
+  deletedAt: number | null;
+  /** Thời điểm xoá hẳn (chỉ ẩn vĩnh viễn, dữ liệu vẫn giữ); `null` = chưa. */
+  purgedAt: number | null;
+}
+
+export type DebtorEventKind = "edit" | "delete" | "restore" | "purge";
+
+export interface DebtorFields {
+  name: string;
+  note: string;
+}
+
+/** Dấu vết thay đổi người nợ — chỉ ghi thêm, không bao giờ sửa/xoá. */
+export interface DebtorEvent {
+  id: string;
+  bookId: string;
+  debtorId: string;
+  kind: DebtorEventKind;
+  /** Chỉ có với `edit`. */
+  before: DebtorFields | null;
+  after: DebtorFields | null;
+  at: number;
+  deviceId: string;
 }
 
 export interface Transaction {

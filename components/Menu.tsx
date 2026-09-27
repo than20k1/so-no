@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useI18n, type Lang } from "@/lib/i18n";
-import { useBackupReminder } from "@/lib/ledger/hooks";
+import { useBackupReminder, useTrashCount } from "@/lib/ledger/hooks";
 import { CloseIcon } from "./icons";
 import { InstallHint, InstallInstructions } from "./InstallHint";
 import { useToast } from "./Toast";
@@ -17,6 +18,7 @@ export default function Menu({ open, onClose }: { open: boolean; onClose: () => 
   const { t, lang, setLang } = useI18n();
   const toast = useToast();
   const reminder = useBackupReminder();
+  const trashCount = useTrashCount();
   const { exportNow, pickFile, pending, confirmImport, cancelImport } = useBackupActions();
   const fileRef = useRef<HTMLInputElement>(null);
   const [showInstall, setShowInstall] = useState(false);
@@ -137,6 +139,17 @@ export default function Menu({ open, onClose }: { open: boolean; onClose: () => 
         )}
 
         <div className="border-t border-line" />
+
+        <Link
+          href="/thung-rac/"
+          className={item}
+          data-testid="menu-trash"
+          // Bỏ `#menu` khỏi mục lịch sử hiện tại, để quay lại từ thùng rác về màn chính với menu đã đóng.
+          onClick={() => window.history.replaceState(window.history.state, "", window.location.pathname)}
+        >
+          <span className="flex-1">{t("trash")}</span>
+          {trashCount > 0 && <span className="tabular rounded-full bg-line px-2 py-0.5 text-sm">{trashCount}</span>}
+        </Link>
 
         <button type="button" className={item} onClick={() => setShowInstall((v) => !v)} aria-expanded={showInstall}>
           {t("installGuide")}
