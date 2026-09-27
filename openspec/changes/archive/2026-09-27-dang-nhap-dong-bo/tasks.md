@@ -55,6 +55,6 @@
 
 ## 8. Triển khai
 
-- [ ] 8.1 Chạy migration lên nhánh Neon `main` (production) sau khi người dùng xác nhận — qua `npm run db:migrate:deploy` trong buildCommand của Vercel (chỉ chạy khi `VERCEL_ENV=production`). Kiểm tra: log build Production có dòng "Đã migrate … account, books, …" đủ bảng như trên `dev`
+- [x] 8.1 Chạy migration lên nhánh Neon `main` (production) sau khi người dùng xác nhận — qua `npm run db:migrate:deploy` trong buildCommand của Vercel (chỉ chạy khi `VERCEL_ENV=production`). Kiểm tra: log build Production có dòng "Đã migrate … account, books, …" đủ bảng như trên `dev`
 - [ ] 8.2 Push, Vercel deploy. Kiểm tra: `/api/health` trên `so-no-theta.vercel.app` trả OK, header `x-vercel-id` có `sin1`; đăng ký tài khoản thật nhận được mail OTP; hai điện thoại thấy cùng sổ
 - [x] 8.3 Cập nhật `README.md`: biến môi trường, `dev:api`, `db:migrate`, cách chạy e2e, công cụ admin khôi phục, cách đổi nhà gửi mail. Kiểm tra: đọc lại khớp lệnh trong `package.json`
