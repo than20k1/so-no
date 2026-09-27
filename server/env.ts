@@ -1,6 +1,6 @@
-import type { AppDeps } from "./app";
-import type { Db } from "./db/client";
-import { mailerFromEnv } from "./mail";
+import type { AppDeps } from "./app.js";
+import type { Db } from "./db/client.js";
+import { mailerFromEnv } from "./mail.js";
 
 /** Dựng phụ thuộc của app từ biến môi trường — dùng chung cho Vercel và Node. */
 export function depsFromEnv(db: Db, env: Record<string, string | undefined> = process.env): AppDeps {

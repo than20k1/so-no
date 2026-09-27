@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { SyncDebtor, SyncEvent, SyncResponse, SyncRows, SyncTransaction } from "./sync";
-import { createHarness, type TestClient } from "./test/harness";
+import type { SyncDebtor, SyncEvent, SyncResponse, SyncRows, SyncTransaction } from "./sync.js";
+import { createHarness, type TestClient } from "./test/harness.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 let h: Awaited<ReturnType<typeof createHarness>>;

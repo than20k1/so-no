@@ -1,9 +1,9 @@
 // @vitest-environment node
 import { expect, it } from "vitest";
-import { createApp } from "./app";
-import { createPgliteDb } from "./db/pglite";
-import { ConsoleMailer, GmailMailer, mailerFromEnv, MemoryMailer } from "./mail";
-import { createHarness } from "./test/harness";
+import { createApp } from "./app.js";
+import { createPgliteDb } from "./db/pglite.js";
+import { ConsoleMailer, GmailMailer, mailerFromEnv, MemoryMailer } from "./mail.js";
+import { createHarness } from "./test/harness.js";
 
 it("chọn nơi gửi mail theo môi trường", () => {
   expect(mailerFromEnv({ E2E_TEST: "1" })).toBeInstanceOf(MemoryMailer);

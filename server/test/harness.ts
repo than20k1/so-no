@@ -1,8 +1,8 @@
 // Dựng app + PGlite + hộp thư bộ nhớ cho test tích hợp server (không mạng, không mail thật).
-import { createApp } from "../app";
-import type { Db } from "../db/client";
-import { createPgliteDb } from "../db/pglite";
-import { MemoryMailer } from "../mail";
+import { createApp } from "../app.js";
+import type { Db } from "../db/client.js";
+import { createPgliteDb } from "../db/pglite.js";
+import { MemoryMailer } from "../mail.js";
 
 export const ORIGIN = "http://localhost:3100";
 

@@ -3,8 +3,8 @@
 //   Khôi phục thật:          ... thêm --apply
 // Không lưu chuỗi production vào file; dán trực tiếp khi chạy.
 import { parseArgs } from "node:util";
-import { adminRestore } from "../server/admin";
-import { createPgDb } from "../server/db/client";
+import { adminRestore } from "../server/admin.js";
+import { createPgDb } from "../server/db/client.js";
 
 const { values } = parseArgs({
   options: { phone: { type: "string" }, name: { type: "string" }, apply: { type: "boolean", default: false } },

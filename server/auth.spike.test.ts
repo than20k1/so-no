@@ -3,10 +3,10 @@
 // mà /api/account/* dựa vào (design D3) thì test này báo ngay.
 import { eq } from "drizzle-orm";
 import { expect, it } from "vitest";
-import { createAuth } from "./auth";
-import { createPgliteDb } from "./db/pglite";
-import * as schema from "./db/schema";
-import { MemoryMailer } from "./mail";
+import { createAuth } from "./auth.js";
+import { createPgliteDb } from "./db/pglite.js";
+import * as schema from "./db/schema.js";
+import { MemoryMailer } from "./mail.js";
 
 it("Better Auth: đăng ký kèm SĐT, OTP email, đăng nhập bằng SĐT, đặt lại mật khẩu thu hồi phiên", async () => {
   const db = await createPgliteDb();

@@ -1,10 +1,10 @@
 import { sql } from "drizzle-orm";
 import { Hono } from "hono";
-import { accountRoutes } from "./account";
-import { createAuth, type Auth } from "./auth";
-import type { Db } from "./db/client";
-import { MemoryMailer, type Mailer } from "./mail";
-import { syncRoutes } from "./sync";
+import { accountRoutes } from "./account.js";
+import { createAuth, type Auth } from "./auth.js";
+import type { Db } from "./db/client.js";
+import { MemoryMailer, type Mailer } from "./mail.js";
+import { syncRoutes } from "./sync.js";
 
 export interface AppDeps {
   db: Db;

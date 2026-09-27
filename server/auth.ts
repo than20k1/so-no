@@ -1,9 +1,9 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { emailOTP, phoneNumber } from "better-auth/plugins";
-import type { Db } from "./db/client";
-import * as schema from "./db/schema";
-import type { Mailer } from "./mail";
+import type { Db } from "./db/client.js";
+import * as schema from "./db/schema.js";
+import type { Mailer } from "./mail.js";
 
 const DAY_S = 24 * 60 * 60;
 

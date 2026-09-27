@@ -2,10 +2,10 @@
 import { and, asc, eq, gt, inArray, isNotNull, isNull, lte, ne, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
-import { currentUser } from "./account";
-import type { AppEnv } from "./app";
-import type { Db } from "./db/client";
-import * as schema from "./db/schema";
+import { currentUser } from "./account.js";
+import type { AppEnv } from "./app.js";
+import type { Db } from "./db/client.js";
+import * as schema from "./db/schema.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 export const PURGE_ALLOWED_MS = 15 * DAY_MS;

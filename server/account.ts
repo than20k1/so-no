@@ -3,10 +3,10 @@
 import { createHmac } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { Hono, type Context } from "hono";
-import type { AppEnv } from "./app";
-import type { Db } from "./db/client";
-import * as schema from "./db/schema";
-import { normalizePhone } from "./phone";
+import type { AppEnv } from "./app.js";
+import type { Db } from "./db/client.js";
+import * as schema from "./db/schema.js";
+import { normalizePhone } from "./phone.js";
 
 const LOCK_AFTER_FAILURES = 5;
 const LOCK_MS = 15 * 60 * 1000;

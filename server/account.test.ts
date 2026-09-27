@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import * as schema from "./db/schema";
-import { createHarness, type TestClient } from "./test/harness";
+import * as schema from "./db/schema.js";
+import { createHarness, type TestClient } from "./test/harness.js";
 
 const MIN = 60 * 1000;
 let h: Awaited<ReturnType<typeof createHarness>>;

@@ -1,9 +1,9 @@
 // Công cụ quản trị (design D13) — chạy riêng bằng scripts/admin-restore.ts, không có đường vào từ app.
 import { and, eq, isNotNull, sql } from "drizzle-orm";
-import { normalizeName } from "../lib/text";
-import type { Db } from "./db/client";
-import * as schema from "./db/schema";
-import { normalizePhone } from "./phone";
+import { normalizeName } from "../lib/text.js";
+import type { Db } from "./db/client.js";
+import * as schema from "./db/schema.js";
+import { normalizePhone } from "./phone.js";
 
 export interface RestoreMatch {
   id: string;

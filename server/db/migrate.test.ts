@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { sql } from "drizzle-orm";
 import { expect, it } from "vitest";
-import { queryRows } from "./client";
-import { createPgliteDb } from "./pglite";
+import { queryRows } from "./client.js";
+import { createPgliteDb } from "./pglite.js";
 
 it("migration tạo đủ bảng Better Auth, bảng sổ nợ và sequence đồng bộ", async () => {
   const db = await createPgliteDb();

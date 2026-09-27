@@ -2,9 +2,9 @@
 // Dùng một function + rewrite thay cho api/[...route].ts vì trailingSlash của vercel.json thêm "/" cuối đường dẫn,
 // làm route động của Vercel không khớp (404). Hono vẫn nhận nguyên đường dẫn gốc.
 import { handle } from "hono/vercel";
-import { createApp } from "../server/app";
-import { createPgDb } from "../server/db/client";
-import { depsFromEnv } from "../server/env";
+import { createApp } from "../server/app.js";
+import { createPgDb } from "../server/db/client.js";
+import { depsFromEnv } from "../server/env.js";
 
 const url = process.env.DATABASE_URL;
 if (!url) throw new Error("Thiếu DATABASE_URL");

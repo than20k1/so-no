@@ -5,7 +5,7 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
-import { MIGRATIONS_FOLDER, strictSsl } from "../server/db/client";
+import { MIGRATIONS_FOLDER, strictSsl } from "../server/db/client.js";
 
 if (process.argv.includes("--deploy") && process.env.VERCEL_ENV !== "production") {
   console.log(`Bỏ qua migration (VERCEL_ENV=${process.env.VERCEL_ENV ?? "không có"}) — chỉ chạy khi deploy Production.`);

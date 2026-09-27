@@ -2,8 +2,8 @@
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import { MIGRATIONS_FOLDER, type Db } from "./client";
-import * as schema from "./schema";
+import { MIGRATIONS_FOLDER, type Db } from "./client.js";
+import * as schema from "./schema.js";
 
 /** DB trống trong bộ nhớ, đã chạy đủ migration. */
 export async function createPgliteDb(): Promise<Db> {

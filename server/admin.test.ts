@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { expect, it, vi } from "vitest";
-import { adminRestore } from "./admin";
-import type { SyncDebtor, SyncResponse } from "./sync";
-import { createHarness } from "./test/harness";
+import { adminRestore } from "./admin.js";
+import type { SyncDebtor, SyncResponse } from "./sync.js";
+import { createHarness } from "./test/harness.js";
 
 it("admin khôi phục người đã xoá hẳn; lượt kéo sau của khách thấy lại, kèm sự kiện restore từ admin", async () => {
   const h = await createHarness();

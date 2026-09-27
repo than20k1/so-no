@@ -2,7 +2,7 @@ import type { SQL } from "drizzle-orm";
 import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import * as schema from "./schema";
+import * as schema from "./schema.js";
 
 /** Kiểu DB dùng chung cho Postgres thật (pg) và PGlite (test) — code nghiệp vụ chỉ biết kiểu này. */
 export type Db = PgDatabase<PgQueryResultHKT, typeof schema>;
