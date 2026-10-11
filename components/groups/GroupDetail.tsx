@@ -173,7 +173,7 @@ function ExpensesTab({ g }: { g: GroupView }) {
       {!g.group.deletedAt && (
         <Link
           href={`/chia-tien/mon/?g=${g.group.id}`}
-          className="grid min-h-16 place-items-center rounded-3xl bg-add text-xl font-bold text-white shadow-sm active:bg-add-press"
+          className="grid min-h-16 place-items-center rounded-3xl bg-pay text-xl font-bold text-white shadow-sm active:bg-pay-press"
         >
           + {t("addExpense")}
         </Link>
@@ -400,7 +400,7 @@ function MemberRow({ m, g }: { m: GroupMember; g: GroupView }) {
   );
 }
 
-function MembersTab({ g }: { g: GroupView }) {
+export function MembersTab({ g }: { g: GroupView }) {
   const t = useGroupsT();
   const router = useRouter();
   const toast = useToast();
@@ -512,24 +512,25 @@ function MembersTab({ g }: { g: GroupView }) {
           )
         )}
 
-        {confirm === "leave" ? (
-          <div className={`${card} flex flex-col gap-2 p-4`} data-testid="leave-confirm">
-            <p className="text-sm">{t("leaveConfirm", { name: g.group.name })}</p>
-            {g.isCreator && <p className="rounded-lg bg-amber-100 p-2 text-sm text-amber-900">{t("leaveCreatorWarn")}</p>}
-            <div className="flex gap-2">
-              <button type="button" className={`${secondaryBtn} flex-1`} onClick={() => setConfirm(null)}>
-                {t("cancel")}
-              </button>
-              <button type="button" disabled={busy} className={`${dangerBtn} flex-1`} onClick={leave}>
-                {t("leaveGroup")}
-              </button>
+        {/* Người tạo nhóm không rời được — muốn thôi dùng thì xoá nhóm (spec group-sharing "Rời nhóm"). */}
+        {!g.isCreator &&
+          (confirm === "leave" ? (
+            <div className={`${card} flex flex-col gap-2 p-4`} data-testid="leave-confirm">
+              <p className="text-sm">{t("leaveConfirm", { name: g.group.name })}</p>
+              <div className="flex gap-2">
+                <button type="button" className={`${secondaryBtn} flex-1`} onClick={() => setConfirm(null)}>
+                  {t("cancel")}
+                </button>
+                <button type="button" disabled={busy} className={`${dangerBtn} flex-1`} onClick={leave}>
+                  {t("leaveGroup")}
+                </button>
+              </div>
             </div>
-          </div>
-        ) : (
-          <button type="button" className={dangerBtn} onClick={() => setConfirm("leave")}>
-            {t("leaveGroup")}
-          </button>
-        )}
+          ) : (
+            <button type="button" className={dangerBtn} onClick={() => setConfirm("leave")}>
+              {t("leaveGroup")}
+            </button>
+          ))}
 
         {g.isCreator &&
           !g.group.deletedAt &&

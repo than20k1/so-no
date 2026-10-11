@@ -7,8 +7,10 @@ import { useEffect, useState, useSyncExternalStore, type FormEvent } from "react
 import { formatDateTime } from "@/lib/date";
 import { groupApi } from "@/lib/groups/api";
 import { createGroup, GroupError, SELF_NAME_META } from "@/lib/groups/groups";
+import { findDuplicates, parseGuestList } from "@/lib/groups/guests";
 import { useGroupList } from "@/lib/groups/hooks";
 import type { GroupView } from "@/lib/groups/view";
+import { GROUP_LIMITS } from "@/lib/groups/wire";
 import { groupErrorKey, useGroupsT } from "@/lib/i18n/groups";
 import { getMeta } from "@/lib/ledger/db";
 import { formatMoney } from "@/lib/money";
@@ -127,19 +129,33 @@ function GroupRow({ g }: { g: GroupView }) {
   );
 }
 
-function CreateGroupForm({ onCancel }: { onCancel: () => void }) {
+export function CreateGroupForm({ onCancel }: { onCancel: () => void }) {
   const t = useGroupsT();
   const router = useRouter();
   const lastSelf = useLiveQuery(async () => (await getMeta<string>(SELF_NAME_META)) ?? "", []);
   const [name, setName] = useState("");
   const [self, setSelf] = useState<string | null>(null);
+  const [guestText, setGuestText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const selfName = self ?? lastSelf ?? "";
 
+  // Kiểm tra ngay khi gõ (spec group-expenses "Tạo nhóm"); lõi `createGroup` kiểm tra lại, không tin riêng giao diện.
+  const guests = parseGuestList(guestText);
+  const people = 1 + guests.length;
+  const tooMany = people > GROUP_LIMITS.maxMembers;
+  const duplicates = findDuplicates(selfName, guests);
+  const liveError = duplicates.length > 0
+    ? duplicates.map((d) => t("dupName", { count: d.count, name: d.name })).join("; ")
+    : tooMany
+      ? t("errTooManyMembers")
+      : null;
+  const guestRows = Math.min(8, Math.max(4, guestText.split("\n").length + 1));
+
   async function submit(e: FormEvent) {
     e.preventDefault();
+    if (liveError) return; // giữ nguyên nội dung đã gõ
     try {
-      const id = await createGroup({ name, selfName });
+      const id = await createGroup({ name, selfName, guests });
       router.push(`/chia-tien/nhom/?id=${id}`);
     } catch (err) {
       setError(t(groupErrorKey(err instanceof GroupError ? err.code : "")));
@@ -153,15 +169,31 @@ function CreateGroupForm({ onCancel }: { onCancel: () => void }) {
         <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder={t("groupNamePlaceholder")} maxLength={200} className={input} />
       </label>
       <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-muted">{t("yourName")}</span>
+        <span className="text-sm font-medium text-muted">{t("leaderName")}</span>
         <input value={selfName} onChange={(e) => setSelf(e.target.value)} placeholder={t("yourNamePlaceholder")} maxLength={200} className={input} />
       </label>
-      <ErrorText>{error}</ErrorText>
+      <label className="flex flex-col gap-1">
+        <span className="text-sm font-medium text-muted">{t("guestsLabel")}</span>
+        <textarea
+          value={guestText}
+          onChange={(e) => setGuestText(e.target.value)}
+          placeholder={t("guestsPlaceholder")}
+          rows={guestRows}
+          autoCapitalize="words"
+          autoCorrect="off"
+          spellCheck={false}
+          className={`${input} py-3`}
+        />
+        <span className={`text-xs ${tooMany ? "font-semibold text-red-900" : "text-muted"}`} data-testid="member-count">
+          {t("members", { n: people })}
+        </span>
+      </label>
+      <ErrorText>{liveError ?? error}</ErrorText>
       <div className="flex gap-2">
         <button type="button" onClick={onCancel} className={`${secondaryBtn} flex-1`}>
           {t("cancel")}
         </button>
-        <button type="submit" className={`${primaryBtn} flex-1`}>
+        <button type="submit" disabled={liveError !== null} className={`${primaryBtn} flex-1`}>
           {t("create")}
         </button>
       </div>

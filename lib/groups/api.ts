@@ -10,6 +10,7 @@ export type GroupApiError =
   | "name_taken"
   | "limit"
   | "not_settled"
+  | "creator_cannot_leave"
   | "too_many_attempts"
   | "offline"
   | "server";

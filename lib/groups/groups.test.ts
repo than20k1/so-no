@@ -43,6 +43,41 @@ describe("nhóm và thành viên", () => {
     expect(await pendingGroupCount()).toBe(4); // nhóm, thành viên, 2 lịch sử
   });
 
+  it("tạo nhóm kèm khách: đủ thành viên đúng thứ tự gõ, mỗi người 1 suất, chỉ mình là tài khoản", async () => {
+    const g = await createGroup({ name: "Đà Lạt", selfName: "Thân", guests: ["Vũ", "Hoàng", "Lương"] });
+    expect(await members(g)).toMatchObject([
+      { name: "Thân", weight: 1, userId: "user-a" },
+      { name: "Vũ", weight: 1, userId: null },
+      { name: "Hoàng", weight: 1, userId: null },
+      { name: "Lương", weight: 1, userId: null },
+    ]);
+    expect(await pendingGroupCount()).toBe(1 + 4 + 1 + 4); // nhóm, 4 thành viên, 5 lịch sử (nhóm + 4 người)
+    const events = await getDb().groupEvents.where("groupId").equals(g).toArray();
+    expect(events.filter((e) => e.entity === "member" && e.kind === "create")).toHaveLength(4);
+  });
+
+  it("tên trùng (giữa khách, hoặc với trưởng nhóm) → không tạo nhóm nào", async () => {
+    expect(await code(createGroup({ name: "Đà Lạt", selfName: "Thân", guests: ["Vũ", "vu"] }))).toBe("duplicate_names");
+    expect(await code(createGroup({ name: "Đà Lạt", selfName: "Thân", guests: ["thân"] }))).toBe("duplicate_names");
+    expect(await getDb().groups.count()).toBe(0);
+    expect(await getDb().groupMembers.count()).toBe(0);
+    expect(await getDb().groupEvents.count()).toBe(0);
+  });
+
+  it("quá giới hạn thành viên → không tạo; vừa đủ giới hạn thì được", async () => {
+    const names = (n: number) => Array.from({ length: n }, (_, i) => `Khách ${i + 1}`);
+    expect(await code(createGroup({ name: "Đông", selfName: "Thân", guests: names(50) }))).toBe("too_many_members");
+    expect(await getDb().groups.count()).toBe(0);
+    const g = await createGroup({ name: "Đông", selfName: "Thân", guests: names(49) });
+    expect(await members(g)).toHaveLength(50);
+  });
+
+  it("tên khách rỗng hoặc quá dài → không tạo nhóm", async () => {
+    expect(await code(createGroup({ name: "Đà Lạt", selfName: "Thân", guests: ["Vũ", "   "] }))).toBe("empty_name");
+    expect(await code(createGroup({ name: "Đà Lạt", selfName: "Thân", guests: ["x".repeat(201)] }))).toBe("name_too_long");
+    expect(await getDb().groups.count()).toBe(0);
+  });
+
   it("thêm khách, trùng tên (không dấu) bị chặn, đổi tên và suất có lịch sử", async () => {
     const g = await createGroup({ name: "Đà Lạt", selfName: "An" });
     const h = await addGuest(g, { name: "Nhà Hùng", weight: 2 });

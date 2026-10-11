@@ -328,6 +328,18 @@ describe("rời, xoá, khôi phục", () => {
     expect(seenByA).toMatchObject({ name: "Hùng", userId: null, removedAt: null });
   });
 
+  it("người tạo nhóm không rời được: 403, vẫn là thành viên gắn tài khoản; thành viên thường số dư 0 vẫn rời được", async () => {
+    const { a, g, ma, hung } = await withHung();
+    const refused = await a.c.post(`/api/groups/${g.id}/leave`);
+    expect(refused.status).toBe(403);
+    expect(refused.body).toEqual({ error: "creator_cannot_leave" });
+    const mine = (await gsync(a.c)).body.pull.members.find((m) => m.id === ma.id);
+    expect(mine?.userId).not.toBeNull();
+    expect((await a.c.post(`/api/groups/${g.id}/delete`)).status).toBe(200); // vẫn xoá được nhóm
+
+    expect((await hung.c.post(`/api/groups/${g.id}/leave`)).status).toBe(200);
+  });
+
   it("chỉ người tạo xoá/khôi phục; ngày 29 còn khôi phục được, sau 30 ngày nhóm ẩn hẳn nhưng còn trong DB", async () => {
     const { a, g, hung } = await withHung();
     expect((await hung.c.post(`/api/groups/${g.id}/delete`)).status).toBe(403);

@@ -27,6 +27,7 @@ export type GroupError =
   | "name_taken"
   | "limit"
   | "not_settled"
+  | "creator_cannot_leave"
   | "too_many_attempts";
 
 const fail = (c: Ctx, error: GroupError, status: 400 | 401 | 403 | 404 | 409 | 429, extra: object = {}) =>
@@ -269,6 +270,8 @@ export function groupRoutes() {
       await lockGroups(tx, [groupId], new Set([groupId]));
       const mine = await myMember(tx, groupId, me.userId);
       if (!mine) return { error: "not_found" as const };
+      // Người tạo rời thì không ai xoá được nhóm hay đổi link mời nữa (spec group-sharing "Rời nhóm").
+      if ((await liveGroup(tx, groupId))?.createdByUserId === me.userId) return { error: "creator_cannot_leave" as const };
       const balance = await memberBalance(tx, groupId, mine.id);
       if (balance !== 0) return { error: "not_settled" as const, balance };
       await tx
@@ -279,6 +282,7 @@ export function groupRoutes() {
       return { error: null };
     });
     if (out.error === "not_found") return fail(c, "not_found", 404);
+    if (out.error === "creator_cannot_leave") return fail(c, "creator_cannot_leave", 403);
     if (out.error === "not_settled") return fail(c, "not_settled", 409, { balance: out.balance });
     return c.json({ ok: true });
   });

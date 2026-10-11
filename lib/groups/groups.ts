@@ -3,6 +3,7 @@ import { newId } from "../id";
 import { getContext, getDb, getMeta, setMeta } from "../ledger/db";
 import type { Expense, GroupEvent, GroupMember } from "../ledger/types";
 import { cleanDisplayName, normalizeName } from "../text";
+import { findDuplicates } from "./guests";
 import { GROUP_LIMITS, type GroupEventEntity, type GroupEventKind, type WireShare } from "./wire";
 
 export const SELF_NAME_META = "groupSelfName";
@@ -15,6 +16,7 @@ export type GroupErrorCode =
   | "name_taken"
   | "invalid_weight"
   | "too_many_members"
+  | "duplicate_names"
   | "member_in_use"
   | "invalid_amount"
   | "no_participants"
@@ -82,11 +84,17 @@ async function assertNameFree(groupId: string, name: string, exceptId?: string) 
 // Nhóm
 // ---------------------------------------------------------------------------
 
-/** Tạo nhóm với chính mình là thành viên đầu tiên (1 suất). Trả id nhóm. */
-export async function createGroup(input: { name: string; selfName: string }): Promise<string> {
+/**
+ * Tạo nhóm với chính mình là thành viên đầu tiên (1 suất), rồi tới các khách theo đúng thứ tự trong `guests`
+ * (mỗi người 1 suất), tất cả trong một transaction. Kiểm tra trùng tên và giới hạn trước khi ghi gì. Trả id nhóm.
+ */
+export async function createGroup(input: { name: string; selfName: string; guests?: string[] }): Promise<string> {
   const me = await userId();
   const name = cleanName(input.name);
   const selfName = cleanName(input.selfName);
+  const guests = (input.guests ?? []).map(cleanName);
+  if (findDuplicates(selfName, guests).length > 0) throw new GroupError("duplicate_names");
+  if (1 + guests.length > GROUP_LIMITS.maxMembers) throw new GroupError("too_many_members");
   await getContext();
   const d = getDb();
   const now = stamp();
@@ -100,6 +108,15 @@ export async function createGroup(input: { name: string; selfName: string }): Pr
     });
     await event(groupId, "group", groupId, "create", null, { name }, now);
     await event(groupId, "member", memberId, "create", null, { name: selfName, weight: 1 }, now);
+    for (const guest of guests) {
+      const id = newId();
+      const at = stamp(); // tăng dần: khách đứng đúng thứ tự đã gõ
+      await d.groupMembers.add({
+        id, groupId, name: guest, searchKey: normalizeName(guest), weight: 1, userId: null,
+        orderKey: at, createdAt: at, updatedAt: at, removedAt: null,
+      });
+      await event(groupId, "member", id, "create", null, { name: guest, weight: 1 }, at);
+    }
     await setMeta(SELF_NAME_META, selfName);
   });
   return groupId;

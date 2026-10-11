@@ -29,11 +29,12 @@ async function registerHere(page: Page, acc: Account) {
   await page.getByTestId("otp-input").fill(await otpFor(page, acc.email));
 }
 
-async function createGroup(page: Page, name: string, self: string) {
+async function createGroup(page: Page, name: string, self: string, guests: string[] = []) {
   await page.goto("/chia-tien/");
   await page.getByRole("button", { name: "+ Tạo nhóm" }).click();
   await page.getByLabel("Tên nhóm").fill(name);
-  await page.getByLabel("Tên của bạn trong nhóm").fill(self);
+  await page.getByLabel("Tên trưởng nhóm (tài khoản này)").fill(self);
+  if (guests.length) await page.getByLabel(/^Thành viên/).fill(guests.join("\n"));
   await page.getByRole("button", { name: "Tạo", exact: true }).click();
   await expect(page).toHaveURL(/\/chia-tien\/nhom\/\?id=/);
   await expect(page.getByRole("heading", { name })).toBeVisible();
@@ -48,10 +49,10 @@ async function addGuest(page: Page, name: string, shares = 1) {
   await expect(page.getByTestId("member-row").filter({ hasText: name })).toBeVisible();
 }
 
-/** Thêm món: chỉ tích `only` (mặc định cả nhóm). */
+/** Thêm chi tiêu: chỉ tích `only` (mặc định cả nhóm). */
 async function addExpense(page: Page, title: string, thousands: string, payer: string, only?: string[]) {
   await tab(page, "Chi tiêu").click();
-  await page.getByRole("link", { name: "+ Thêm món" }).click();
+  await page.getByRole("link", { name: "+ Thêm chi tiêu" }).click();
   await expect(page.locator("#title")).toBeFocused();
   await page.locator("#title").fill(title);
   await page.locator("#amount").fill(thousands);
@@ -159,6 +160,40 @@ test("chuyến đi trong ghi chú: kết quả Nhà T → Nhà Hùng 216.000, đ
   await page.getByTestId("group-list").getByRole("link", { name: /Đà Lạt/ }).click();
   await tab(page, "Lịch sử").click();
   await expect(page.getByTestId("group-history")).toContainText("Nhà T thêm Vịt 180.000 đ");
+});
+
+test("tạo nhóm kèm thành viên: báo tên trùng, tạo đủ người; nút \"+ Thêm chi tiêu\"; trưởng nhóm không có Rời nhóm", async ({ page }) => {
+  await register(page, newAccount());
+  await page.goto("/chia-tien/");
+  await page.getByRole("button", { name: "+ Tạo nhóm" }).click();
+  await page.getByLabel("Tên nhóm").fill("Đà Lạt");
+  await page.getByLabel("Tên trưởng nhóm (tài khoản này)").fill("Thân");
+
+  // Tên trùng: báo ngay, chặn nút Tạo, nội dung còn nguyên
+  await page.getByLabel(/^Thành viên/).fill("Vũ\nvu");
+  await expect(page.getByTestId("group-error")).toHaveText("Có 2 người tên “Vũ” trùng nhau");
+  await expect(page.getByRole("button", { name: "Tạo", exact: true })).toBeDisabled();
+  await expect(page.getByLabel(/^Thành viên/)).toHaveValue("Vũ\nvu");
+
+  await page.getByLabel(/^Thành viên/).fill("Vũ\n\nHoàng\nLương");
+  await expect(page.getByTestId("member-count")).toHaveText("4 người");
+  await page.getByRole("button", { name: "Tạo", exact: true }).click();
+  await expect(page).toHaveURL(/\/chia-tien\/nhom\/\?id=/);
+
+  // Đủ bốn người, đúng thứ tự gõ
+  await tab(page, "Thành viên").click();
+  const rows = page.getByTestId("member-row");
+  await expect(rows).toHaveCount(4);
+  for (const [i, name] of ["Thân", "Vũ", "Hoàng", "Lương"].entries()) await expect(rows.nth(i)).toContainText(name);
+
+  // Trưởng nhóm: không có Rời nhóm, vẫn có Xoá nhóm
+  await expect(page.getByRole("button", { name: "Rời nhóm" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Xoá nhóm" })).toBeVisible();
+
+  // Nút thêm chi tiêu mở màn "Thêm chi tiêu"
+  await tab(page, "Chi tiêu").click();
+  await page.getByRole("link", { name: "+ Thêm chi tiêu" }).click();
+  await expect(page.getByRole("heading", { name: "Thêm chi tiêu" })).toBeVisible();
 });
 
 test("sửa, xoá kèm hoàn tác, khôi phục món; xoá khách đã dính món thì báo lý do", async ({ page }) => {

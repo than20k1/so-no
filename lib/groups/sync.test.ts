@@ -99,6 +99,23 @@ describe("đồng bộ nhóm giữa các thành viên", () => {
     expect(await on(B, async () => (await getDb().groupMembers.get(hung))?.userId)).toBe(B.me.userId);
   });
 
+  it("nhóm tạo offline kèm khách: lên server đủ thành viên, máy thứ hai của cùng tài khoản kéo về đủ và đúng thứ tự", async () => {
+    const phone = await signUp();
+    const A = await device("A", phone);
+    const g = await on(A, () => createGroup({ name: "Đà Lạt", selfName: "Thân", guests: ["Vũ", "Hoàng", "Lương"] }));
+    expect(await on(A, pendingGroupCount)).toBe(10); // nhóm, 4 thành viên, 5 lịch sử
+    await sync(A);
+    expect(await on(A, pendingGroupCount)).toBe(0);
+
+    const A2 = await device("A2", phone);
+    await sync(A2);
+    const a2 = await on(A2, () => snapshot(g));
+    expect(a2.members).toEqual(["Thân", "Vũ", "Hoàng", "Lương"]);
+    expect(a2.events).toBe(5);
+    expect(await on(A2, async () => (await getDb().groupMembers.where("groupId").equals(g).toArray()).filter((m) => m.userId).length)).toBe(1);
+    expect(await on(A, () => snapshot(g))).toEqual(a2);
+  });
+
   it("hai người cùng ghi khi offline: sau đồng bộ cả hai có đủ món và cùng kết quả", async () => {
     const A = await device("A", await signUp());
     const { g, t, hung, both } = await trip(A);
