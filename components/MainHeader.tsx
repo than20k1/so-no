@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useState, type ReactNode } from "react";
 import { useI18n } from "@/lib/i18n";
 import type { AppMode } from "@/lib/mode";
+import { useSafeToUpdate } from "@/lib/update";
 import { MenuIcon } from "./icons";
 import { useInstallHint } from "./InstallHint";
 import { ModeSwitch } from "./ModeSwitch";
@@ -12,10 +13,14 @@ import { useMenuState } from "./useMenuState";
 // Menu ít dùng → tải lười cho màn chính nhẹ; service worker vẫn precache nên mở được khi offline.
 const Menu = dynamic(() => import("./Menu"), { ssr: false });
 
-/** Header của hai màn chính (Ghi nợ, Chia tiền): nút menu `[=]`, công tắc chế độ, và phần tóm tắt bên phải. */
-export function MainHeader({ mode, children }: { mode: AppMode; children?: ReactNode }) {
+/**
+ * Header của hai màn chính (Ghi nợ, Chia tiền): nút menu `[=]`, công tắc chế độ, và phần tóm tắt bên phải.
+ * `safe`: màn không có gì đang nhập dở — cùng với menu đóng thì được tự áp dụng bản mới (lib/update.ts).
+ */
+export function MainHeader({ mode, safe = true, children }: { mode: AppMode; safe?: boolean; children?: ReactNode }) {
   const { t } = useI18n();
   const menu = useMenuState();
+  useSafeToUpdate(safe && !menu.open);
   // Menu chỉ được nạp ở lần mở đầu, sau đó giữ lại để có hiệu ứng đóng/mở.
   const [menuLoaded, setMenuLoaded] = useState(false);
   const installHint = useInstallHint();

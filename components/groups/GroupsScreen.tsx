@@ -43,7 +43,7 @@ export function GroupsScreen() {
 
   return (
     <>
-      <MainHeader mode="chia-tien">
+      <MainHeader mode="chia-tien" safe={!creating}>
         {loggedIn && live && live.length > 0 && (
           <>
             <div className="truncate text-xs text-muted">{net > 0 ? t("youGetShort") : net < 0 ? t("youOweShort") : t("allEven")}</div>

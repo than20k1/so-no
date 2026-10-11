@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { holdUpdates } from "@/lib/update";
 
 export const TOAST_DURATION_MS = 6000;
 
@@ -40,7 +41,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(null), toast.duration ?? TOAST_DURATION_MS);
-    return () => clearTimeout(timer);
+    // Toast (có thể kèm "Hoàn tác") đang hiện → không tự tải lại để áp dụng bản mới.
+    const release = holdUpdates();
+    return () => {
+      clearTimeout(timer);
+      release();
+    };
   }, [toast]);
 
   return (

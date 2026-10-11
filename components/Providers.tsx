@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, type ReactNode } from "react";
 import { I18nProvider } from "@/lib/i18n";
 import { initInstallCapture } from "@/lib/install";
@@ -7,13 +8,18 @@ import { getContext } from "@/lib/ledger/db";
 import { purgeExpired } from "@/lib/ledger/debtors";
 import { useTrackNavigation } from "@/lib/nav";
 import { readAccountMarker } from "@/lib/sync/marker";
+import { useUpdateState } from "@/lib/update";
 import { ToastProvider } from "./Toast";
+
+// Chỉ tải khi thật sự có bản mới — giữ gói JS màn chính trong ngân sách (spec offline-app-shell).
+const UpdateBar = dynamic(() => import("./UpdateBar").then((m) => m.UpdateBar), { ssr: false });
 
 initInstallCapture();
 
-function registerServiceWorker() {
+/** Đăng ký service worker và theo dõi bản mới (lib/update-sw.ts, tải lười). */
+export function registerServiceWorker() {
   if (process.env.NODE_ENV !== "production" || !("serviceWorker" in navigator)) return;
-  const register = () => navigator.serviceWorker.register("/sw.js").catch(() => {});
+  const register = () => void import("@/lib/update-sw").then((m) => m.initUpdates()).catch(() => {});
   if (document.readyState === "complete") register();
   else window.addEventListener("load", register, { once: true });
 }
@@ -35,10 +41,14 @@ export function Providers({ children }: { children: ReactNode }) {
     else setTimeout(load, 1000);
   }, []);
   useTrackNavigation();
+  const update = useUpdateState();
 
   return (
     <I18nProvider>
-      <ToastProvider>{children}</ToastProvider>
+      <ToastProvider>
+        {(update.waiting || update.stale) && <UpdateBar />}
+        {children}
+      </ToastProvider>
     </I18nProvider>
   );
 }

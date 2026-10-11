@@ -28,7 +28,7 @@ const VERSION = ${JSON.stringify(version)};
 const CACHE = "so-no-" + VERSION;
 const ASSETS = ${JSON.stringify(assets)};
 
-// Cài bản mới ngầm; KHÔNG skipWaiting — bản mới chỉ chạy ở lần mở app sau,
+// Cài bản mới ngầm; KHÔNG tự skipWaiting — trang quyết định lúc áp dụng (lib/update.ts),
 // để không tải lại trang khi người dùng đang ghi nợ.
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -46,6 +46,12 @@ self.addEventListener("activate", (event) => {
       await self.clients.claim();
     })(),
   );
+});
+
+self.addEventListener("message", (event) => {
+  const type = event.data && event.data.type;
+  if (type === "SKIP_WAITING") self.skipWaiting();
+  else if (type === "GET_VERSION" && event.ports[0]) event.ports[0].postMessage(VERSION);
 });
 
 function htmlPath(pathname) {
@@ -70,6 +76,8 @@ self.addEventListener("fetch", (event) => {
       const key = req.mode === "navigate" ? htmlPath(url.pathname) : req;
       const hit = await cache.match(key, MATCH);
       if (hit) return hit;
+      // Trang bản này không biết → gần như chắc đã có bản mới; hỏi server ngay để trang được báo cập nhật.
+      if (req.mode === "navigate") self.registration.update().catch(() => {});
       try {
         return await fetch(req);
       } catch (err) {

@@ -101,4 +101,12 @@ export const en: Dict = {
   evCreated: "Created",
   emptyValue: "(empty)",
   evRestoreAdmin: "Restored (admin)",
+
+  updateAvailable: "New version available",
+  updateNow: "Update",
+  appVersion: "Version {version}",
+  checkUpdate: "Check for updates",
+  checkingUpdate: "Checking…",
+  updateLatest: "You're on the latest version",
+  updateOffline: "Connect to the internet to check for updates",
 };

@@ -6,7 +6,8 @@ import { vi as viDict } from "@/lib/i18n/vi";
 import { resetDbForTests } from "@/lib/ledger/db";
 import { deleteDebtor, listTrash } from "@/lib/ledger/debtors";
 import { addDebt } from "@/lib/ledger/ledger";
-import { Providers } from "./Providers";
+import { resetUpdatesForTests } from "@/lib/update-sw";
+import { Providers, registerServiceWorker } from "./Providers";
 import { TOAST_DURATION_MS, ToastProvider, useToast } from "./Toast";
 
 afterEach(() => {
@@ -84,6 +85,22 @@ describe("Toast", () => {
 });
 
 describe("Providers", () => {
+  it("bản production: đăng ký service worker qua bộ theo dõi cập nhật", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const reg = Object.assign(new EventTarget(), { installing: null, waiting: null, update: vi.fn() });
+    const register = vi.fn(async () => reg);
+    const container = Object.assign(new EventTarget(), { controller: null, register });
+    Object.defineProperty(navigator, "serviceWorker", { value: container, configurable: true });
+    try {
+      registerServiceWorker();
+      await waitFor(() => expect(register).toHaveBeenCalledWith("/sw.js"));
+    } finally {
+      vi.unstubAllEnvs();
+      resetUpdatesForTests();
+      Reflect.deleteProperty(navigator, "serviceWorker");
+    }
+  });
+
   it("mở app thì tự xoá hẳn người đã nằm thùng rác đủ 30 ngày", async () => {
     await resetDbForTests();
     const day = 24 * 60 * 60 * 1000;

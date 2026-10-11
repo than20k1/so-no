@@ -8,6 +8,7 @@ import { AccountSection } from "./AccountSection";
 import { CloseIcon } from "./icons";
 import { InstallHint, InstallInstructions } from "./InstallHint";
 import { useBackupActions } from "./useBackupActions";
+import { VersionSection } from "./VersionSection";
 
 const LANGS: { value: Lang; label: string }[] = [
   { value: "vi", label: "Tiếng Việt" },
@@ -160,6 +161,9 @@ export default function Menu({ open, onClose }: { open: boolean; onClose: () => 
             <InstallInstructions />
           </div>
         )}
+
+        <div className="border-t border-line" />
+        <VersionSection itemClass={item} />
       </nav>
     </div>
   );

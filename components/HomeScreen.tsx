@@ -26,7 +26,7 @@ export function HomeScreen() {
 
   return (
     <>
-      <MainHeader mode="ghi-no">
+      <MainHeader mode="ghi-no" safe={query === ""}>
         <div className="truncate text-xs text-muted">{t("totalOwed")}</div>
         <div className="tabular truncate text-lg font-bold" data-testid="total">
           {debtors ? formatMoney(total) : "—"}

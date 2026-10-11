@@ -99,6 +99,14 @@ export const vi = {
   evCreated: "Tạo người nợ",
   emptyValue: "(trống)",
   evRestoreAdmin: "Khôi phục (admin)",
+
+  updateAvailable: "Có bản mới",
+  updateNow: "Cập nhật",
+  appVersion: "Phiên bản {version}",
+  checkUpdate: "Kiểm tra bản mới",
+  checkingUpdate: "Đang kiểm tra…",
+  updateLatest: "Đang dùng bản mới nhất",
+  updateOffline: "Cần kết nối mạng để kiểm tra bản mới",
 };
 
 export type Dict = Record<keyof typeof vi, string>;
